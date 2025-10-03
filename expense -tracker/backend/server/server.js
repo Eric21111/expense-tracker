@@ -1,4 +1,3 @@
-
 // import express from "express";
 // import mongoose from "mongoose";
 // import cors from "cors";
@@ -25,6 +24,7 @@
 // });
 // const User = mongoose.model("User", UserSchema);
 
+
 // app.get("/users", async (req, res) => {
 //   const users = await User.find();
 //   res.json(users);
@@ -35,6 +35,7 @@
 //   await newUser.save();
 //   res.json(newUser);
 // });
+
 
 // const PORT = process.env.PORT || 5000;
 // app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
