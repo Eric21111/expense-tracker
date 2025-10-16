@@ -109,12 +109,13 @@ const Login = () => {
 
           <div className="mt-4 text-center text-sm text-gray-600">or Login with</div>
           <div className="flex justify-center mt-2">
-            <button
-              onClick={handleGoogleLogin}
-              className="border rounded-full p-2 hover:bg-gray-100 transition"
-            >
-              <FcGoogle size={22} />
-            </button>
+          <button
+            onClick={handleGoogleLogin}
+            className="border rounded-full p-2 hover:bg-gray-100 hover:scale-110 transition-transform duration-200 ease-in-out shadow-sm hover:shadow-md cursor-pointer "
+          >
+            <FcGoogle size={22} />
+          </button>
+
           </div>
 
           <p className="text-center text-sm mt-4 text-gray-600">

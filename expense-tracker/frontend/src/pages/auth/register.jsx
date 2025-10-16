@@ -56,44 +56,57 @@ const Register = () => {
             Create a Trackit Account
           </h2>
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-9">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+         
             <div className="flex gap-2">
+              <div className="w-1/2">
+                <label className="block text-sm mb-1">First Name</label>
+                <input
+                  type="text"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-black"
+                  required
+                />
+              </div>
+
+              <div className="w-1/2">
+                <label className="block text-sm mb-1">Last Name</label>
+                <input
+                  type="text"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-black"
+                  required
+                />
+              </div>
+            </div>
+
+           
+            <div>
+              <label className="block text-sm mb-1">Email</label>
               <input
-                type="text"
-                placeholder="First Name"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                className="w-1/2 border rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-black"
-                required
-              />
-              <input
-                type="text"
-                placeholder="Last Name"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                className="w-1/2 border rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-black"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-black"
                 required
               />
             </div>
 
-            <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-black"
-              required
-            />
+           
+            <div>
+              <label className="block text-sm mb-1">Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-black"
+                required
+              />
+            </div>
 
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-black"
-              required
-            />
-
+          
             <button
               type="submit"
               className="mt-2 bg-black text-white py-2 rounded-md hover:opacity-90 transition"
