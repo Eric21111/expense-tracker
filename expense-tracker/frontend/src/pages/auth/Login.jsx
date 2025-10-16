@@ -1,39 +1,55 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { FcGoogle } from "react-icons/fc";
+import { useNavigate } from "react-router-dom";
 import Header from "../../components/shared/Header";
 import Footer from "../../components/shared/Footer";
+import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import app from "../../firebaseConfig";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const navigate = useNavigate();
+  const auth = getAuth(app);
+  const provider = new GoogleAuthProvider();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!email || !password) {
-      alert("Please fill out all fields.");
-      return;
-    }
+    if (!email || !password) return alert("Please fill out all fields.");
 
     try {
-      const res = await axios.post("http://localhost:5000/users", {
+      const res = await axios.post("http://localhost:5000/users/login", {
         email,
         password,
       });
 
-      if (res.status === 201 || res.status === 200) {
-        alert("✅ User data successfully added to database!");
-        setEmail("");
-        setPassword("");
-      }
+      alert(res.data.message);
+      setEmail("");
+      setPassword("");
+      navigate("/home");
     } catch (error) {
+      alert(error.response?.data?.error || "❌ Invalid credentials.");
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      const res = await axios.post("http://localhost:5000/users/google", {
+        name: user.displayName,
+        email: user.email,
+        photoURL: user.photoURL,
+        uid: user.uid,
+      });
+
+      alert(res.data.message);
+      navigate("/home");
+    } catch (error) {
+      alert("❌ Google login failed.");
       console.error(error);
-      if (error.response?.data?.error) {
-        alert("❌ " + error.response.data.error);
-      } else {
-        alert("❌ Failed to add user data. Check console for details.");
-      }
     }
   };
 
@@ -42,7 +58,6 @@ const Login = () => {
       <Header />
 
       <main className="flex flex-1 items-center justify-center px-20 gap-60">
-       
         <div>
           <h2 className="text-5xl font-extrabold leading-snug text-black mb-70">
             Make Every Peso <br /> Count <br />
@@ -50,8 +65,10 @@ const Login = () => {
           </h2>
         </div>
 
-   
-        <div className="w-[520px]  p-10 rounded-2xl shadow-md" style={{ backgroundColor: "#D9D9D94A" }}>
+        <div
+          className="w-[520px] p-10 rounded-2xl shadow-md"
+          style={{ backgroundColor: "#D9D9D94A" }}
+        >
           <h3 className="text-center text-sm font-semibold text-gray-600">
             Mo'Moolah
           </h3>
@@ -90,20 +107,24 @@ const Login = () => {
             </button>
           </form>
 
-          <div className="mt-4 text-center text-sm text-gray-600">
-            or Login with
-          </div>
+          <div className="mt-4 text-center text-sm text-gray-600">or Login with</div>
           <div className="flex justify-center mt-2">
-            <button className="border rounded-full p-2 hover:bg-gray-100 transition">
+            <button
+              onClick={handleGoogleLogin}
+              className="border rounded-full p-2 hover:bg-gray-100 transition"
+            >
               <FcGoogle size={22} />
             </button>
           </div>
 
           <p className="text-center text-sm mt-4 text-gray-600">
             No Account?{" "}
-            <a href="#" className="font-semibold text-black hover:underline">
-              Sign in
-            </a>
+            <button
+              onClick={() => navigate("/register")}
+              className="font-semibold text-black hover:underline"
+            >
+              Sign up
+            </button>
           </p>
         </div>
       </main>
