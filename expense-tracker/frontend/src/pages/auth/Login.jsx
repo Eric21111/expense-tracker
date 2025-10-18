@@ -1,18 +1,28 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { FcGoogle } from "react-icons/fc";
+import { FaUser, FaLock } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import Header from "../../components/shared/Header";
 import Footer from "../../components/shared/Footer";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import app from "../../firebaseConfig";
+import Logo from "../../assets/logo.png";
+import WalletIllustration from "../../assets/wallet.png"; 
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet"></link>
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [mounted, setMounted] = useState(false);
   const navigate = useNavigate();
   const auth = getAuth(app);
   const provider = new GoogleAuthProvider();
+
+  useEffect(() => {
+    const t = setTimeout(() => setMounted(true), 10);
+    return () => clearTimeout(t);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,7 +33,6 @@ const Login = () => {
         email,
         password,
       });
-
       alert(res.data.message);
       setEmail("");
       setPassword("");
@@ -37,14 +46,12 @@ const Login = () => {
     try {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
-
       const res = await axios.post("http://localhost:5000/users/google", {
         name: user.displayName,
         email: user.email,
         photoURL: user.photoURL,
         uid: user.uid,
       });
-
       alert(res.data.message);
       navigate("/home");
     } catch (error) {
@@ -54,79 +61,139 @@ const Login = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-white">
+    <div className="min-h-screen flex flex-col bg-[#F5F5F5] font-poppins">
       <Header />
 
-      <main className="flex flex-1 items-center justify-center px-20 gap-60">
-        <div>
-          <h2 className="text-5xl font-extrabold leading-snug text-black mb-70">
-            Make Every Peso <br /> Count <br />
-            <span className="font-semibold">(Literally!)</span>
-          </h2>
-        </div>
+      <main className="flex-1 flex items-center justify-center  py-6">
+      <div className="relative w-full max-w-[1900px] flex items-center justify-between gap-50">
 
-        <div
-          className="w-[520px] p-10 rounded-2xl shadow-md"
-          style={{ backgroundColor: "#D9D9D94A" }}
-        >
-          <h3 className="text-center text-sm font-semibold text-gray-600">
-            Mo'Moolah
-          </h3>
-          <h2 className="text-center text-2xl font-semibold mb-6">
-            Welcome to Trackit
-          </h2>
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            <div>
-              <label className="block text-sm mb-1">Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-black"
-                required
+          <div className="hidden lg:block relative flex-1 ">
+            <div
+              aria-hidden
+              style={{
+                width: 620,
+                height: 700,
+                borderRadius: 30,
+                background:
+                  "linear-gradient(135deg,#CCEFCC 0%, #34A853 55%, #144221 100%)",
+                clipPath: "ellipse(100% 70% at 0% 60%)",
+                boxShadow: "0 10px 30px rgba(0,0,0,0.06)",
+                transform: "translateX(10px)",
+              }}
+            />
+            <h1 className="absolute left-10 top-48 text-6xl font-bold leading-tight text-white">
+              Make <span className="text-[#FFE082]"><br />Every</span> Peso <br />
+              Count <br />
+              <span className="text-white">(Literally!)</span>
+            </h1>
+            
+          </div>
+          <img
+              src={WalletIllustration}
+              alt="wallet"
+              className="absolute left-90 top-40 w-[900px] h-auto pointer-events-none"
+            />
+
+          <div
+            className={`relative mx-auto w-full max-w-[700px] bg-white rounded-2xl top-5 shadow-2xl border border-gray-100 p-10 transform transition-all duration-400 ease-out
+            ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
+            role="region"
+          >
+
+            <div className="flex flex-col items-center mb-6">
+              <img
+                src={Logo}
+                alt="Trackit Logo"
+                className="w-14 h-14 mb-3 object-contain"
               />
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-800 text-center">
+                Welcome Back to <span className="text-green-600">Trackit!</span>
+              </h1>
             </div>
 
-            <div>
-              <label className="block text-sm mb-1">Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-black"
-                required
-              />
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div>
+                <label className="block text-sm text-gray-700 mb-2">Email</label>
+                <div className="flex items-stretch rounded-xl overflow-hidden border border-green-300 shadow-sm">
+                  <div className="flex items-center justify-center bg-green-500 px-4">
+                    <FaUser className="text-white" />
+                  </div>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Enter your email..."
+                    className="flex-1 px-4 py-3 outline-none text-sm"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-700 mb-2">
+                  Password
+                </label>
+                <div className="flex items-stretch rounded-xl overflow-hidden border border-green-300 shadow-sm">
+                  <div className="flex items-center justify-center bg-green-500 px-4">
+                    <FaLock className="text-white" />
+                  </div>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter your password..."
+                    className="flex-1 px-4 py-3 outline-none text-sm"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between text-sm">
+                <div>
+                  No Account?{" "}
+                  <button
+                    type="button"
+                    onClick={() => navigate("/register")}
+                    className="text-green-600 font-semibold hover:underline"
+                  >
+                    Sign up
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  className="text-gray-500 hover:underline"
+                >
+                  Forgot Password?
+                </button>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full mt-1 py-3 rounded-lg text-white font-semibold bg-gradient-to-r from-green-400 to-green-600 shadow-md hover:shadow-lg transform hover:-translate-y-[1px] transition-all duration-200"
+              >
+                Login
+              </button>
+            </form>
+
+            <div className="mt-5 mb-2 flex items-center gap-3">
+              <div className="flex-1 h-px bg-gray-200" />
+              <div className="text-xs text-gray-400">or</div>
+              <div className="flex-1 h-px bg-gray-200" />
             </div>
 
             <button
-              type="submit"
-              className="mt-2 bg-black text-white py-2 rounded-md hover:opacity-90 transition"
+              onClick={handleGoogleLogin}
+              className="w-full mt-2 flex items-center justify-center gap-3 border border-gray-300 py-3 rounded-lg hover:bg-gray-50 shadow-sm transition transform hover:scale-[1.01] duration-150"
             >
-              Login
+              <FcGoogle size={20} />
+              <span className="text-sm font-medium text-gray-700">
+                Continue with Google
+              </span>
             </button>
-          </form>
-
-          <div className="mt-4 text-center text-sm text-gray-600">or Login with</div>
-          <div className="flex justify-center mt-2">
-          <button
-            onClick={handleGoogleLogin}
-            className="border rounded-full p-2 hover:bg-gray-100 hover:scale-110 transition-transform duration-200 ease-in-out shadow-sm hover:shadow-md cursor-pointer "
-          >
-            <FcGoogle size={22} />
-          </button>
-
           </div>
 
-          <p className="text-center text-sm mt-4 text-gray-600">
-            No Account?{" "}
-            <button
-              onClick={() => navigate("/register")}
-              className="font-semibold text-black hover:underline"
-            >
-              Sign up
-            </button>
-          </p>
+          <div className="hidden lg:block flex-1" />
         </div>
       </main>
 

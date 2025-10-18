@@ -7,20 +7,9 @@ const Header = () => {
 
   return (
     <nav
-      className="flex items-center justify-between px-12 py-5 relative "
-      
+      className="flex items-center justify-between px-12 py-5 absolute top-4 left-0 w-full z-50 bg-transparent"
     >
- 
-      <h1
-        onClick={() => navigate("/home")}
-        className="text-xl font-bold absolute left-12 cursor-pointer hover:opacity-80 transition color-[#144221]"
-      >
-        Trackit
-      </h1>
-
-    
-     <div className="flex items-center justify-center mx-auto border border-white rounded-full px-2 py-1 shadow-2xl shadow-gray-500/70">
-
+      <div className="flex items-center justify-center mx-auto border border-white/70 rounded-full px-2 py-1 shadow-lg shadow-gray-500/50 bg-white/20 backdrop-blur-md">
         <button
           onClick={() => navigate("/home")}
           className={`px-6 py-1 text-sm font-medium rounded-full transition ${
@@ -36,7 +25,7 @@ const Header = () => {
           onClick={() => navigate("/")}
           className={`px-6 py-1 text-sm font-medium rounded-full transition ${
             location.pathname === "/"
-               ? "bg-[#CCEFCC] text-black"
+              ? "bg-[#CCEFCC] text-black"
               : "hover:bg-[#CCEFCC] hover:text-black"
           }`}
         >
