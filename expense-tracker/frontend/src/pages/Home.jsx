@@ -7,7 +7,7 @@ const Home = () => {
     <div className="flex flex-col min-h-screen bg-white">
         <Header/>
 
-        <h1 className='text-xl flex justify-center'>DITO KA PIA</h1>
+        <h1 className='dito'>DITO KAYO PIA & FERROSE</h1>
     </div>
   )
 }

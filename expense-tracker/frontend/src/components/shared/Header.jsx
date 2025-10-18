@@ -13,13 +13,13 @@ const Header = () => {
  
       <h1
         onClick={() => navigate("/home")}
-        className="text-lg font-bold absolute left-12 cursor-pointer hover:opacity-80 transition color-[#144221]"
+        className="text-xl font-bold absolute left-12 cursor-pointer hover:opacity-80 transition color-[#144221]"
       >
         Trackit
       </h1>
 
     
-      <div className="flex items-center justify-center mx-auto border border-white rounded-full px-2 py-1 shadow-2xl shadow-gray-500/70">
+     <div className="flex items-center justify-center mx-auto border border-white rounded-full px-2 py-1 shadow-2xl shadow-gray-500/70">
 
         <button
           onClick={() => navigate("/home")}
