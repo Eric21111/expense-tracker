@@ -24,7 +24,8 @@ const Header = () => {
         <button
           onClick={() => navigate("/")}
           className={`px-6 py-1 text-sm font-medium rounded-full transition ${
-            location.pathname === "/"
+            location.pathname === "/" ||
+            location.pathname === "/register"
               ? "bg-[#CCEFCC] text-black"
               : "hover:bg-[#CCEFCC] hover:text-black"
           }`}

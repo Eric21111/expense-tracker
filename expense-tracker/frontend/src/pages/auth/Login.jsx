@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { FcGoogle } from "react-icons/fc";
-import { FaUser, FaLock } from "react-icons/fa";
+import { FaUser, FaLock,FaEye, FaEyeSlash } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import Header from "../../components/shared/Header";
 import Footer from "../../components/shared/Footer";
@@ -10,6 +10,7 @@ import app from "../../firebaseConfig";
 import Logo from "../../assets/logo.png";
 import WalletIllustration from "../../assets/wallet.png"; 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet"></link>
+import PasswordInput from "../../components/shared/PasswordInput";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -18,6 +19,7 @@ const Login = () => {
   const navigate = useNavigate();
   const auth = getAuth(app);
   const provider = new GoogleAuthProvider();
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => setMounted(true), 10);
@@ -36,7 +38,7 @@ const Login = () => {
       alert(res.data.message);
       setEmail("");
       setPassword("");
-      navigate("/home");
+      navigate("/dashboard");
     } catch (error) {
       alert(error.response?.data?.error || "❌ Invalid credentials.");
     }
@@ -53,7 +55,7 @@ const Login = () => {
         uid: user.uid,
       });
       alert(res.data.message);
-      navigate("/home");
+      navigate("/dashboard");
     } catch (error) {
       alert("❌ Google login failed.");
       console.error(error);
@@ -82,7 +84,7 @@ const Login = () => {
                 transform: "translateX(10px)",
               }}
             />
-            <h1 className="absolute left-10 top-48 text-6xl font-bold leading-tight text-white">
+            <h1 className="absolute left-10 top-48 text-6xl font-semibold leading-tight text-white">
               Make <span className="text-[#FFE082]"><br />Every</span> Peso <br />
               Count <br />
               <span className="text-white">(Literally!)</span>
@@ -96,10 +98,11 @@ const Login = () => {
             />
 
           <div
-            className={`relative mx-auto w-full max-w-[700px] bg-white rounded-2xl top-5 shadow-2xl border border-gray-100 p-10 transform transition-all duration-400 ease-out
-            ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
+            className={`relative mx-auto w-full max-w-[520px] bg-white rounded-2xl top-5 shadow-2xl border border-gray-100 p-10 transform transition-all duration-400 ease-out
+            ${mounted ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-10"}`}
             role="region"
           >
+
 
             <div className="flex flex-col items-center mb-6">
               <img
@@ -139,13 +142,21 @@ const Login = () => {
                     <FaLock className="text-white" />
                   </div>
                   <input
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter your password..."
                     className="flex-1 px-4 py-3 outline-none text-sm"
                     required
+                    
                   />
+                   <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute left-107 top-76 text-gray-500 hover:text-green-600 focus:outline-none"
+                >
+                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
                 </div>
               </div>
 
@@ -197,7 +208,7 @@ const Login = () => {
         </div>
       </main>
 
-      <Footer />
+   
     </div>
   );
 };
