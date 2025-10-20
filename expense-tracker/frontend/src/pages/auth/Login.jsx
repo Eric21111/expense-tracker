@@ -9,8 +9,9 @@ import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import app from "../../firebaseConfig";
 import Logo from "../../assets/logo.png";
 import WalletIllustration from "../../assets/wallet.png"; 
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet"></link>
 import PasswordInput from "../../components/shared/PasswordInput";
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet"></link>
+
 
 const Login = () => {
   const [email, setEmail] = useState("");

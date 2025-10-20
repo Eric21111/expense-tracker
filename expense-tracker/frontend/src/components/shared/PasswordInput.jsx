@@ -59,7 +59,7 @@ const PasswordInput = ({ password, setPassword }) => {
           placeholder="Enter your password..."
           className="flex-1 px-4 py-3 outline-none text-sm text-gray-700 placeholder-gray-400"
           required
-          pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&]).{8,}$"
+          pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$"
           title="Password must be at least 8 characters long and include an uppercase letter, lowercase letter, number, and special character."
         />
 
