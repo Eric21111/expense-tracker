@@ -68,7 +68,7 @@ const Register = () => {
     <div className="min-h-screen flex flex-col bg-[#F5F5F5] font-poppins">
       <Header />
 
-      <main className="flex-1 flex items-center justify-center py-6 m-1">
+      <main className="flex-1 flex items-center justify-center py-4 px-4 sm:py-6 lg:py-6 lg:m-1">
      
           <div className="hidden lg:block relative flex-1 order-2 ">
             <div className="hidden lg:block relative flex-1">
@@ -96,47 +96,45 @@ const Register = () => {
           <img
             src={PiggyIllustration}
             alt="piggy"
-            className="absolute w-[900px] h-auto pointer-events-none left-80 z-50"
+            className="hidden lg:block absolute w-[900px] h-auto pointer-events-none left-80 z-50"
           />
 
           <div
-            className={`mx-auto w-full max-w-[520px] bg-white rounded-2xl shadow-2xl border mt-15 ml-50 border-gray-100 p-8 md:p-10 transform transition-all duration-400 ease-out
+            className={`mx-auto w-full max-w-[520px] bg-white rounded-2xl shadow-2xl border border-gray-100 p-6 sm:p-8 md:p-10 lg:mt-15 lg:ml-50 transform transition-all duration-400 ease-out
               ${mounted ? "opacity-100 translate-x-0" : "opacity-0 translate-x-10"}`}
             style={{ transitionDuration: "400ms" }}
           >
 
 
-            <div className="flex flex-col items-center text-center mb-6">
-              <img src={Logo} alt="Trackit Logo" className="w-14 h-14 mb-3" />
-              <h2 className="text-3xl font-bold text-gray-800">
+            <div className="flex flex-col items-center text-center mb-4 sm:mb-6">
+              <img src={Logo} alt="Trackit Logo" className="w-12 h-12 sm:w-14 sm:h-14 mb-2 sm:mb-3" />
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 px-2">
                 Welcome to <span className="text-green-600">Trackit!</span>
               </h2>
             </div>
 
           
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
 
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <div className="flex-1 border border-green-300 rounded-xl overflow-hidden flex items-center">
-                  
                   <input
                     type="text"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
                     placeholder="First Name..."
-                    className="flex-1 px-4 py-3 outline-none text-sm text-gray-700 placeholder-gray-400"
+                    className="flex-1 px-3 py-2.5 sm:px-4 sm:py-3 outline-none text-sm text-gray-700 placeholder-gray-400"
                     required
                   />
                 </div>
 
                 <div className="flex-1 border border-green-300 rounded-xl overflow-hidden flex items-center">
-              
                   <input
                     type="text"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
                     placeholder="Last Name..."
-                    className="flex-1 px-4 py-3 outline-none text-sm text-gray-700 placeholder-gray-400"
+                    className="flex-1 px-3 py-2.5 sm:px-4 sm:py-3 outline-none text-sm text-gray-700 placeholder-gray-400"
                     required
                   />
                 </div>
@@ -144,15 +142,15 @@ const Register = () => {
 
              
               <div className="border border-green-300 rounded-xl overflow-hidden flex items-center">
-              <div className="flex items-center justify-center bg-green-500 px-4 py-4">
-                    <FaUser className="text-white" />
-                  </div>
+                <div className="flex items-center justify-center bg-green-500 px-3 sm:px-4 py-3 sm:py-4">
+                  <FaUser className="text-white text-sm sm:text-base" />
+                </div>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email..."
-                  className="flex-1 px-4 py-3 outline-none text-sm text-gray-700 placeholder-gray-400"
+                  className="flex-1 px-3 py-2.5 sm:px-4 sm:py-3 outline-none text-sm text-gray-700 placeholder-gray-400"
                   required
                 />
               </div>
@@ -161,7 +159,7 @@ const Register = () => {
               <PasswordInput password={password} setPassword={setPassword} />
 
 
-              <div className="text-sm text-center">
+              <div className="text-xs sm:text-sm text-center">
                 Already have an account?{" "}
                 <button
                   type="button"
@@ -174,14 +172,14 @@ const Register = () => {
 
               <button
                 type="submit"
-                className="w-full py-3 rounded-lg text-white font-semibold bg-gradient-to-r from-green-400 to-green-600 shadow-md hover:shadow-lg transform hover:-translate-y-[1px] transition-all duration-200"
+                className="w-full py-2.5 sm:py-3 rounded-lg text-sm sm:text-base text-white font-semibold bg-gradient-to-r from-green-400 to-green-600 shadow-md hover:shadow-lg transform hover:-translate-y-[1px] transition-all duration-200"
               >
                 Register
               </button>
             </form>
 
           
-            <div className="mt-6 mb-4 flex items-center gap-3">
+            <div className="mt-4 sm:mt-6 mb-3 sm:mb-4 flex items-center gap-3">
               <div className="flex-1 h-px bg-gray-200" />
               <div className="text-xs text-gray-400">or</div>
               <div className="flex-1 h-px bg-gray-200" />
@@ -190,10 +188,10 @@ const Register = () => {
            
             <button
               onClick={handleGoogleLogin}
-              className="w-full flex items-center justify-center gap-3 border border-gray-300 py-3 rounded-lg hover:bg-gray-50 shadow-sm transition transform hover:scale-[1.01] duration-150"
+              className="w-full flex items-center justify-center gap-2 sm:gap-3 border border-gray-300 py-2.5 sm:py-3 rounded-lg hover:bg-gray-50 shadow-sm transition transform hover:scale-[1.01] duration-150"
             >
-              <FcGoogle size={20} />
-              <span className="text-sm font-medium text-gray-700">
+              <FcGoogle size={18} className="sm:w-5 sm:h-5" />
+              <span className="text-xs sm:text-sm font-medium text-gray-700">
                 Continue with Google
               </span>
             </button>
