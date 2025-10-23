@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
 import { FaTimes, FaArrowLeft } from "react-icons/fa";
 import axios from "axios";
-import ShieldIcon from "../../assets/shield.png";
+import ShieldIcon from "../assets/shieldcode.png";
 import ResetPasswordModal from "./ResetPasswordModal";
 
 const VerifyCodeModal = ({ isOpen, onClose, email, onBack }) => {

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { FaTimes } from "react-icons/fa";
 import axios from "axios";
-import ShieldIcon from "../../assets/shield.png";
+import ShieldIcon from "../assets/shield.png";
 import VerifyCodeModal from "./VerifyCodeModal";
 
 const ForgotPasswordModal = ({ isOpen, onClose }) => {

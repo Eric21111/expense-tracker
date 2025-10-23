@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { FaTimes, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
 import axios from "axios";
-import ResetIcon from "../../assets/reset.png";
+import ResetIcon from "../assets/reset.png";
 import SuccessModal from "./SuccessModal";
 
 const ResetPasswordModal = ({ isOpen, onClose, email, verificationCode }) => {
