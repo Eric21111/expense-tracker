@@ -9,7 +9,7 @@ import PiggyIllustration from "../../assets/piggy.png";
 import { FcGoogle } from "react-icons/fc";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import app from "../../firebaseConfig";
-import PasswordInput from "../../components/shared/PasswordInput";
+import PasswordInput from "../../components/PasswordInput";
 
 
 const Register = () => {

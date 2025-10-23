@@ -9,8 +9,8 @@ import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import app from "../../firebaseConfig";
 import Logo from "../../assets/logo.png";
 import WalletIllustration from "../../assets/wallet.png"; 
-import PasswordInput from "../../components/shared/PasswordInput";
-import ForgotPasswordModal from "../../components/shared/ForgotPasswordModal";
+import PasswordInput from "../../components/PasswordInput";
+import ForgotPasswordModal from "../../components/ForgotPasswordModal";
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet"></link>
 
 
