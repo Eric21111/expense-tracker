@@ -11,9 +11,9 @@ const Header = () => {
     >
       <div className="flex items-center justify-center mx-auto border border-white/70 rounded-full px-2 py-1 shadow-lg shadow-gray-500/50 bg-white/20 backdrop-blur-md">
         <button
-          onClick={() => navigate("/home")}
+          onClick={() => navigate("/")}
           className={`px-6 py-1 text-sm font-medium rounded-full transition ${
-            location.pathname === "/home"
+            location.pathname === "/"
               ? "bg-[#CCEFCC] text-black"
               : "hover:bg-[#CCEFCC] hover:text-black"
           }`}
@@ -22,9 +22,9 @@ const Header = () => {
         </button>
 
         <button
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/login")}
           className={`px-6 py-1 text-sm font-medium rounded-full transition ${
-            location.pathname === "/" ||
+            location.pathname === "/login" ||
             location.pathname === "/register"
               ? "bg-[#CCEFCC] text-black"
               : "hover:bg-[#CCEFCC] hover:text-black"
