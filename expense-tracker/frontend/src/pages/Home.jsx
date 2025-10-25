@@ -25,8 +25,6 @@ import LandingPageBG from '../assets/home/landingpageBG.svg';
 
 const Home = () => {
   const navigate = useNavigate();
-  
- 
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -35,7 +33,6 @@ const Home = () => {
     message: ''
   });
 
-
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -43,7 +40,6 @@ const Home = () => {
       [name]: value
     }));
   };
-
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -58,6 +54,8 @@ const Home = () => {
     });
   };
 
+ 
+  
   return (
     <div className="font-poppins bg-[#f5f5f5] overflow-x-hidden pt-20">
       <Header />
@@ -181,13 +179,11 @@ const Home = () => {
         </div>
       </section>
 
-
     
       <section className="bg-[#f8f8f8] py-20 px-[10%] text-center font-poppins">
         <h2 className="text-[40px] font-bold mb-[60px]">
           Simple Steps to <span className="text-[#34A853]">Smarter Spending</span>
         </h2>
-
 
         <div className="grid grid-cols-[1fr_auto_1fr] grid-rows-[repeat(2,auto)] items-center justify-items-center gap-y-[40px] gap-x-[60px] relative">
     
@@ -197,7 +193,6 @@ const Home = () => {
             <p className="text-sm leading-[1.5]">Securely log in using your Gmail account or personal credentials.</p>
           </div>
 
-
          
           <div className="bg-white rounded-[15px] p-[30px_25px] text-left shadow-[0_4px_10px_rgba(0,0,0,0.1)] w-[300px] transition-all hover:-translate-y-1 hover:bg-[#d1f4e0] cursor-pointer col-start-1 row-start-2">
             <div className="bg-[#34A853] text-white w-10 h-10 rounded-full flex items-center justify-center font-bold text-2xl mb-[10px]">2</div>
@@ -205,11 +200,9 @@ const Home = () => {
             <p className="text-sm leading-[1.5]">Record spending details — the system will automatically categorize them using AI.</p>
           </div>
 
-
           <div className="col-start-2 row-start-1 row-span-2">
             <img src={MonitorFront} alt="Trackit App on computer" className="w-[320px]" />
           </div>
-
 
        
           <div className="bg-white rounded-[15px] p-[30px_25px] text-left shadow-[0_4px_10px_rgba(0,0,0,0.1)] w-[300px] transition-all hover:-translate-y-1 hover:bg-[#d1f4e0] cursor-pointer col-start-3 row-start-1">
@@ -217,7 +210,6 @@ const Home = () => {
             <h3 className="text-[22px] text-[#34A853] mb-2">Set Your Budgets</h3>
             <p className="text-sm leading-[1.5]">Define limits for each category and track your progress in real-time.</p>
           </div>
-
 
       
           <div className="bg-white rounded-[15px] p-[30px_25px] text-left shadow-[0_4px_10px_rgba(0,0,0,0.1)] w-[300px] transition-all hover:-translate-y-1 hover:bg-[#d1f4e0] cursor-pointer col-start-3 row-start-2">
@@ -228,7 +220,6 @@ const Home = () => {
         </div>
       </section>
 
-
       {/* B */}
       <section className="py-[60px_20px] text-center">
         <div className="max-w-[1200px] mx-auto px-5">
@@ -237,14 +228,12 @@ const Home = () => {
               Built for <span className="text-[#34A853]">Everyone</span> Who Handles Money
             </h1>
 
-
             <div className="flex justify-center items-stretch flex-wrap gap-5 max-w-[900px] mx-auto p-[30px]">
               <div className="bg-white rounded-[15px] p-5 shadow-[0_4px_6px_rgba(0,0,0,0.1)] flex-1 basis-[250px] max-w-[280px] flex flex-col justify-between min-h-[320px] transition-all hover:-translate-y-1 hover:bg-[#d1f4e0] cursor-pointer">
                 <img src={Students} alt="Students" className="w-full h-[150px] object-cover rounded-[10px] mb-[15px]" />
                 <h3 className="text-[#34A853] leading-5 text-[1.4em] mb-1">Students</h3>
                 <p className="text-[0.9em] text-[#616161] flex-grow mt-2">Manage your allowance wisely and save what matters most!</p>
               </div>
-
 
               <div className="bg-white rounded-[15px] p-5 shadow-[0_4px_6px_rgba(0,0,0,0.1)] flex-1 basis-[250px] max-w-[280px] flex flex-col justify-between min-h-[320px] transition-all hover:-translate-y-1 hover:bg-[#d1f4e0] cursor-pointer">
                 <img src={Employees} alt="Employees" className="w-full h-[150px] object-cover rounded-[10px] mb-[15px]" />
@@ -261,7 +250,6 @@ const Home = () => {
           </div>
         </div>
       </section>
-
 
       <section className="py-[100px_20px]">
         <div className="max-w-[1200px] mx-auto flex items-center gap-20">
@@ -309,7 +297,6 @@ const Home = () => {
             </ul>
           </div>
 
-
           <div className="flex-1 relative flex justify-center items-center">
             <div className="w-[600px] h-[600px] rounded-full bg-gradient-to-r from-[rgba(204,239,204)] via-[rgba(52,168,83)] to-[rgba(20,66,33)] relative flex items-center justify-center">
               <img src={Monitor2} alt="Dashboard Preview" className="absolute w-[700px] -bottom-[130px] left-1/2 -translate-x-1/2 drop-shadow-[0_20px_40px_rgba(0,0,0,0.15)]" />
@@ -317,7 +304,6 @@ const Home = () => {
           </div>
         </div>
       </section>
-
 
  
       <section className="bg-white py-20 px-[30px]">
@@ -337,7 +323,6 @@ const Home = () => {
               <p className="text-[0.9em] text-[#333] m-0">Email Address</p>
             </div>
           </div>
-
 
           <form onSubmit={handleSubmit} className="bg-white rounded-[25px] p-[45px_40px] shadow-[0_4px_20px_rgba(0,0,0,0.08)]">
             <div className="grid grid-cols-2 gap-5 mb-5">
