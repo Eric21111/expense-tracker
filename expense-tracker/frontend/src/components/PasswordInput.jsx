@@ -1,10 +1,14 @@
-import React, { useState } from "react";
-import { FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
+import React, { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
+import { FaLock, FaEye, FaEyeSlash, FaCheckCircle } from "react-icons/fa";
 
 const PasswordInput = ({ password, setPassword }) => {
   const [strength, setStrength] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [showTooltip, setShowTooltip] = useState(false);
+  const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
+  const inputContainerRef = useRef(null);
 
   const evaluateStrength = (pass) => {
     let score = 0;
@@ -35,17 +39,55 @@ const PasswordInput = ({ password, setPassword }) => {
   };
 
   const rules = [
-    { test: /.{8,}/, label: "At least 8 characters" },
-    { test: /[A-Z]/, label: "At least one uppercase letter" },
-    { test: /[a-z]/, label: "At least one lowercase letter" },
-    { test: /[0-9]/, label: "At least one number" },
-    { test: /[@$!%*?&]/, label: "At least one special character (@$!%*?&)" },
+    { 
+      test: (pass) => pass.length >= 8 && pass.length <= 50, 
+      label: "At least 8 and at most 50 characters in length" 
+    },
+    { 
+      test: /[a-z]/, 
+      label: "At least one lower-case letter (a-z)" 
+    },
+    { 
+      test: /[A-Z]/, 
+      label: "At least one upper-case letter (A-Z)" 
+    },
+    { 
+      test: /[0-9]/, 
+      label: "At least one digit (0-9)" 
+    },
+    { 
+      test: /[@#$!%*?&]/, 
+      label: "At least one and at most ten non alpha-numeric character(s) (Example: @, #, $)" 
+    },
   ];
 
+  // Check if all rules are met
+  const allRulesMet = rules.every((rule) => {
+    return typeof rule.test === 'function' 
+      ? rule.test(password) 
+      : rule.test.test(password);
+  });
+
+  useEffect(() => {
+    const shouldShow = (showTooltip || isTyping) && !allRulesMet;
+    if (shouldShow && inputContainerRef.current) {
+      const rect = inputContainerRef.current.getBoundingClientRect();
+      setTooltipPosition({
+        top: rect.top + window.scrollY,
+        left: rect.right + window.scrollX + 16, // 16px gap (ml-4)
+      });
+    }
+  }, [showTooltip, isTyping, allRulesMet]);
+
   return (
-    <div className="w-full">
+    <div className="w-full relative">
      
-      <div className="border border-green-300 rounded-xl overflow-hidden flex items-center relative">
+      <div 
+        ref={inputContainerRef}
+        className="border border-green-300 rounded-xl overflow-hidden flex items-center relative"
+        onMouseEnter={() => setShowTooltip(true)}
+        onMouseLeave={() => setShowTooltip(false)}
+      >
        
         <div className="flex items-center justify-center bg-green-500 px-4 py-4">
           <FaLock className="text-white" />
@@ -56,11 +98,12 @@ const PasswordInput = ({ password, setPassword }) => {
           type={showPassword ? "text" : "password"}
           value={password}
           onChange={handleChange}
+          onFocus={() => setShowTooltip(true)}
           placeholder="Enter your password..."
           className="flex-1 px-4 py-3 outline-none text-sm text-gray-700 placeholder-gray-400"
           required
           pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$"
-          title="Password must be at least 8 characters long and include an uppercase letter, lowercase letter, number, and special character."
+        
         />
 
         <button
@@ -73,64 +116,79 @@ const PasswordInput = ({ password, setPassword }) => {
       </div>
 
      
-      <div
-        className={`transition-all duration-500 ease-in-out ${
-          isTyping ? "max-h-40 opacity-100 mt-2" : "max-h-0 opacity-0 overflow-hidden"
-        }`}
-      >
-      
-        <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-          <div
-            className={`h-full ${getBarColor()} transition-all duration-300`}
-            style={{
-              width:
+      {/* Tooltip - rendered using Portal to appear on top of everything */}
+      {(showTooltip || isTyping) && !allRulesMet && createPortal(
+        <div 
+          className="fixed w-80 z-[99999] pointer-events-none"
+          style={{
+            top: `${tooltipPosition.top}px`,
+            left: `${tooltipPosition.left}px`,
+          }}
+        >
+          <div className="bg-gray-800 rounded-lg p-4 space-y-2 shadow-2xl border border-gray-700">
+            {rules.map((rule, index) => {
+              const passed = typeof rule.test === 'function' 
+                ? rule.test(password) 
+                : rule.test.test(password);
+              return (
+                <div key={index} className="flex items-start gap-2">
+                  <FaCheckCircle 
+                    className={`mt-0.5 flex-shrink-0 ${
+                      passed ? "text-green-500" : "text-gray-500"
+                    }`}
+                    size={16}
+                  />
+                  <span
+                    className={`text-sm ${
+                      passed ? "text-white" : "text-gray-400"
+                    }`}
+                  >
+                    {rule.label}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+          {/* Arrow pointing to the input */}
+          <div className="absolute left-0 top-4 -ml-2 w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 border-r-gray-800"></div>
+        </div>,
+        document.body
+      )}
+
+      {/* Strength indicator below input - only shows when typing */}
+      {isTyping && (
+        <div className="mt-2">
+          <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div
+              className={`h-full ${getBarColor()} transition-all duration-300`}
+              style={{
+                width:
+                  strength === "Weak"
+                    ? "33%"
+                    : strength === "Medium"
+                    ? "66%"
+                    : strength === "Strong"
+                    ? "100%"
+                    : "0%",
+              }}
+            ></div>
+          </div>
+
+          {strength && (
+            <p
+              className={`text-sm mt-1 font-medium ${
                 strength === "Weak"
-                  ? "33%"
+                  ? "text-red-500"
                   : strength === "Medium"
-                  ? "66%"
-                  : strength === "Strong"
-                  ? "100%"
-                  : "0%",
-            }}
-          ></div>
+                  ? "text-yellow-600"
+                  : "text-green-600"
+              }`}
+            >
+              {strength} Password
+            </p>
+          )}
         </div>
-
-       
-        {strength && (
-          <p
-            className={`text-sm mt-1 font-medium ${
-              strength === "Weak"
-                ? "text-red-500"
-                : strength === "Medium"
-                ? "text-yellow-600"
-                : "text-green-600"
-            }`}
-          >
-            {strength} Password
-          </p>
-        )}
-
-       
-        <div className="mt-2 text-xs text-gray-600 space-y-1">
-          {rules.map((rule, index) => {
-            const passed = rule.test.test(password);
-            return (
-              <div key={index} className="flex items-center gap-2">
-                <span
-                  className={`inline-block w-2 h-2 rounded-full ${
-                    passed ? "bg-green-500" : "bg-gray-400"
-                  }`}
-                ></span>
-                <span
-                  className={`${passed ? "text-green-600 font-medium" : ""}`}
-                >
-                  {rule.label}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      )}
     </div>
   );
 };
