@@ -61,7 +61,6 @@ const PasswordInput = ({ password, setPassword }) => {
     },
   ];
 
-  // Check if all rules are met
   const allRulesMet = rules.every((rule) => {
     return typeof rule.test === 'function' 
       ? rule.test(password) 
@@ -74,7 +73,7 @@ const PasswordInput = ({ password, setPassword }) => {
       const rect = inputContainerRef.current.getBoundingClientRect();
       setTooltipPosition({
         top: rect.top + window.scrollY,
-        left: rect.right + window.scrollX + 16, // 16px gap (ml-4)
+        left: rect.right + window.scrollX + 16,
       });
     }
   }, [showTooltip, isTyping, allRulesMet]);
@@ -116,7 +115,7 @@ const PasswordInput = ({ password, setPassword }) => {
       </div>
 
      
-      {/* Tooltip - rendered using Portal to appear on top of everything */}
+      
       {(showTooltip || isTyping) && !allRulesMet && createPortal(
         <div 
           className="fixed w-80 z-[99999] pointer-events-none"
@@ -149,13 +148,13 @@ const PasswordInput = ({ password, setPassword }) => {
               );
             })}
           </div>
-          {/* Arrow pointing to the input */}
+          
           <div className="absolute left-0 top-4 -ml-2 w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 border-r-gray-800"></div>
         </div>,
         document.body
       )}
 
-      {/* Strength indicator below input - only shows when typing */}
+   
       {isTyping && (
         <div className="mt-2">
           <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">

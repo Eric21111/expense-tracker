@@ -1,9 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import emailjs from '@emailjs/browser';
-import { emailConfig } from '../emailConfig';
 import Header from '../components/shared/Header';
-import Footer from '../components/shared/footer';
 import Monitor1 from '../assets/home/Monitor_1.svg';
 import IconPiggyBank from '../assets/home/icon-piggybank.svg';
 import IconSpending from '../assets/home/icon-spending.svg';
@@ -35,7 +32,6 @@ const Home = () => {
     subject: '',
     message: ''
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -45,54 +41,17 @@ const Home = () => {
     }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    setIsSubmitting(true);
-
-    // EmailJS configuration
-    const { serviceId, templateId, publicKey } = emailConfig;
-
-    // Debug: Check if environment variables are loaded
-    if (!serviceId || !templateId || !publicKey) {
-      console.error('EmailJS credentials missing:', { serviceId, templateId, publicKey });
-      alert('Email configuration error. Please restart the development server.');
-      setIsSubmitting(false);
-      return;
-    }
-
-    // Template parameters
-    const templateParams = {
-      from_name: `${formData.firstName} ${formData.lastName}`,
-      from_email: formData.email,
-      to_email: 'libradillaeric116@gmail.com',
-      subject: formData.subject,
-      message: formData.message,
-      reply_to: formData.email
-    };
-
-    try {
-      console.log('Attempting to send email with:', { serviceId, templateId, publicKey: publicKey ? 'present' : 'missing' });
-      console.log('Template params:', templateParams);
-      
-      const result = await emailjs.send(serviceId, templateId, templateParams, publicKey);
-      console.log('Email sent successfully:', result);
-      
-      alert('Message sent successfully! We will get back to you soon.');
-      setFormData({
-        firstName: '',
-        lastName: '',
-        email: '',
-        subject: '',
-        message: ''
-      });
-    } catch (error) {
-      console.error('Failed to send email - Full error:', error);
-      console.error('Error message:', error.text || error.message);
-      console.error('Error status:', error.status);
-      alert(`Failed to send message. Error: ${error.text || error.message}\n\nPlease try again or email us directly at libradillaeric116@gmail.com`);
-    } finally {
-      setIsSubmitting(false);
-    }
+    console.log('Form submitted:', formData);
+    alert('Message sent! We will get back to you soon.');
+    setFormData({
+      firstName: '',
+      lastName: '',
+      email: '',
+      subject: '',
+      message: ''
+    });
   };
 
  
@@ -130,7 +89,7 @@ const Home = () => {
               Explore
             </button>
             <button 
-              onClick={() => navigate('/login')} 
+              onClick={() => navigate('/login')}  
               className="py-[15px] px-[35px] rounded-[30px] font-semibold transition-all text-[16px] bg-gradient-to-l from-[rgba(52,168,83,0.95)] to-[rgba(20,66,33,0.589)] text-white shadow-[4px_4px_4px_rgba(0,0,0,0.2)] hover:shadow-[4px_4px_4px_rgba(0,0,0,0.2)] hover:-translate-y-0.5"
             >
               Start Saving
@@ -200,7 +159,7 @@ const Home = () => {
           </div>
         </div>
       </section>
-      <section id="about" className="relative w-full h-[60vh] bg-[#34A853] overflow-hidden flex items-center">
+      <section className="relative w-full h-[60vh] bg-[#34A853] overflow-hidden flex items-center">
         <div className="container max-w-[1200px] mx-auto px-5">
           <div className="flex items-start w-1/2 h-full">
             <div className="flex-1 text-white z-[2]">
@@ -223,7 +182,7 @@ const Home = () => {
       </section>
 
     
-      <section id="how-it-works" className="bg-[#f8f8f8] py-20 px-[10%] text-center font-poppins">
+      <section className="bg-[#f8f8f8] py-20 px-[10%] text-center font-poppins">
         <h2 className="text-[40px] font-bold mb-[60px]">
           Simple Steps to <span className="text-[#34A853]">Smarter Spending</span>
         </h2>
@@ -264,7 +223,7 @@ const Home = () => {
       </section>
 
       {/* B */}
-      <section id="target-users" className="py-[60px_20px] text-center">
+      <section className="py-[60px_20px] text-center">
         <div className="max-w-[1200px] mx-auto px-5">
           <div className="w-full max-w-[1200px] bg-[#CCEFCC] rounded-[50px] p-[60px_50px]">
             <h1 className="text-[2.5em] mb-10">
@@ -294,7 +253,7 @@ const Home = () => {
         </div>
       </section>
 
-      <section id="features" className="py-[100px_20px]">
+      <section className="py-[100px_20px]">
         <div className="max-w-[1200px] mx-auto flex items-center gap-20">
           <div className="flex-1 text-left">
             <h2 className="text-[40px] font-extrabold leading-[1.3] mb-10">
@@ -431,16 +390,14 @@ const Home = () => {
             </div>
             <button 
               type="submit" 
-              disabled={isSubmitting}
-              className="bg-gradient-to-r from-[rgba(204,239,204)] to-[rgba(52,168,83)] text-white py-4 border-none rounded-[10px] text-base font-semibold cursor-pointer w-full transition-all duration-300 hover:from-[rgba(52,168,83)] hover:to-[rgba(20,66,33)] hover:shadow-[0_8px_20px_rgba(52,168,83,0.4)] hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none"
+              className="bg-gradient-to-r from-[rgba(204,239,204)] to-[rgba(52,168,83)] text-white py-4 border-none rounded-[10px] text-base font-semibold cursor-pointer w-full transition-all hover:bg-[#34A853]"
             >
-              {isSubmitting ? 'Sending...' : 'Send Message'}
+              Send Message
             </button>
           </form>
         </div>
       </section>
 
-      <Footer />
     </div>
   );
 };
