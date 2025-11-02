@@ -222,7 +222,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* B */}
+  
       <section className="py-[60px_20px] text-center">
         <div className="max-w-[1200px] mx-auto px-5">
           <div className="w-full max-w-[1200px] bg-[#CCEFCC] rounded-[50px] p-[60px_50px]">

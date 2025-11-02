@@ -37,6 +37,13 @@ const Register = () => {
         email,
         password,
       });
+      
+      // Store user data in localStorage
+      localStorage.setItem("user", JSON.stringify({
+        name: `${firstName} ${lastName}`,
+        email: email
+      }));
+      
       alert(res.data.message);
       navigate("/dashboard");
     } catch (err) {
@@ -56,6 +63,15 @@ const Register = () => {
         photoURL: user.photoURL,
         uid: user.uid,
       });
+      
+      // Store user data in localStorage
+      localStorage.setItem("user", JSON.stringify({
+        name: user.displayName,
+        email: user.email,
+        photoURL: user.photoURL,
+        displayName: user.displayName
+      }));
+      
       alert(res.data.message);
       navigate("/dashboard");
     } catch (error) {
