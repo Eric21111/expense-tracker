@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { FaUser, FaLock } from "react-icons/fa";
-import Header from "../../components/shared/Header";
 import Footer from "../../components/shared/Footer";
 import Logo from "../../assets/logo.png";
 import PiggyIllustration from "../../assets/piggy.png";
@@ -44,6 +43,9 @@ const Register = () => {
         email: email
       }));
       
+      // Dispatch custom event to notify components (Header, Sidebar, etc.)
+      window.dispatchEvent(new Event("userStorageChange"));
+      
       alert(res.data.message);
       navigate("/dashboard");
     } catch (err) {
@@ -72,6 +74,9 @@ const Register = () => {
         displayName: user.displayName
       }));
       
+      // Dispatch custom event to notify components (Header, Sidebar, etc.)
+      window.dispatchEvent(new Event("userStorageChange"));
+      
       alert(res.data.message);
       navigate("/dashboard");
     } catch (error) {
@@ -82,8 +87,6 @@ const Register = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F5F5F5] font-poppins">
-      <Header />
-
       <main className="flex-1 flex items-center justify-center py-4 px-4 sm:py-6 lg:py-6 lg:m-1">
      
           <div className="hidden lg:block relative flex-1 order-2 ">
@@ -116,7 +119,7 @@ const Register = () => {
           />
 
           <div
-            className={`mx-auto w-full max-w-[520px] bg-white rounded-2xl shadow-2xl border border-gray-100 p-6 sm:p-8 md:p-10 lg:mt-15 lg:ml-50 transform transition-all duration-400 ease-out
+            className={`mx-auto w-full max-w-[520px] bg-white rounded-2xl shadow-lg border border-gray-100 p-6 sm:p-8 md:p-10 lg:mt-15 lg:ml-50 transform transition-all duration-400 ease-out
               ${mounted ? "opacity-100 translate-x-0" : "opacity-0 translate-x-10"}`}
             style={{ transitionDuration: "400ms" }}
           >
@@ -188,7 +191,7 @@ const Register = () => {
 
               <button
                 type="submit"
-                className="w-full py-2.5 sm:py-3 rounded-lg text-sm sm:text-base text-white font-semibold bg-gradient-to-r from-green-400 to-green-600 shadow-md hover:shadow-lg transform hover:-translate-y-[1px] transition-all duration-200"
+                className="w-full py-2.5 sm:py-3 rounded-lg text-sm sm:text-base text-white font-semibold bg-gradient-to-r from-green-400 to-green-600 shadow-sm hover:shadow-md transform hover:-translate-y-[1px] transition-all duration-200"
               >
                 Register
               </button>

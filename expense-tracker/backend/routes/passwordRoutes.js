@@ -3,13 +3,13 @@ import { forgotPassword, verifyCode, resetPassword } from "../controllers/passwo
 
 const router = express.Router();
 
-// POST /users/forgot-password
+
 router.post("/forgot-password", forgotPassword);
 
-// POST /users/verify-code
+
 router.post("/verify-code", verifyCode);
 
-// POST /users/reset-password
+
 router.post("/reset-password", resetPassword);
 
 export default router;

@@ -1,5 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import Sidebar from "../components/shared/Sidebar";
+import DeleteAccountModal from "../components/DeleteAccountModal";
+import DeleteSuccessModal from "../components/DeleteSuccessModal";
+import { getAuth, signOut } from "firebase/auth";
+import app from "../firebaseConfig";
+import { useSidebar } from "../contexts/SidebarContext";
 
 const Settings = () => {
   const [formData, setFormData] = useState({
@@ -20,6 +27,40 @@ const Settings = () => {
     weeklySummary: true,
     emailNotifications: false,
   });
+  const [isGoogleUser, setIsGoogleUser] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const navigate = useNavigate();
+  const { isExpanded } = useSidebar();
+
+  useEffect(() => {
+    const auth = getAuth(app);
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        
+        const isGoogle = user.providerData.some(
+          (provider) => provider.providerId === "google.com"
+        );
+        setIsGoogleUser(isGoogle);
+      } else {
+       
+        const storedUser = localStorage.getItem("user");
+        if (storedUser) {
+          try {
+            const userData = JSON.parse(storedUser);
+            setIsGoogleUser(!!userData.photoURL);
+          } catch (e) {
+            setIsGoogleUser(false);
+          }
+        } else {
+          setIsGoogleUser(false);
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -37,24 +78,73 @@ const Settings = () => {
   };
 
   const handleChangePassword = () => {
-    // Handle change password logic
+   
     console.log("Change password clicked");
   };
 
   const handleDeleteAccount = () => {
-    // Handle delete account logic
-    console.log("Delete account clicked");
+    setShowDeleteModal(true);
   };
 
+  const confirmDeleteAccount = async () => {
+    setIsDeleting(true);
+    try {
+      const storedUser = localStorage.getItem("user");
+      if (!storedUser) {
+        alert("❌ User information not found. Please login again.");
+        navigate("/login");
+        return;
+      }
+
+      const userData = JSON.parse(storedUser);
+      const email = userData.email;
+
+      if (!email) {
+        alert("❌ Email not found. Please login again.");
+        navigate("/login");
+        return;
+      }
+
+      const response = await axios.post("http://localhost:5000/users/delete", {
+        email,
+      });
+
+   
+      localStorage.removeItem("user");
+      
+      
+      const auth = getAuth(app);
+      if (auth.currentUser) {
+        await signOut(auth);
+      }
+      
+
+      setShowDeleteModal(false);
+      setShowSuccessModal(true);
+      
+      setTimeout(() => {
+        navigate("/login");
+      }, 2000);
+    } catch (error) {
+      console.error("Delete account error:", error);
+      const errorMsg = error.response?.data?.error || "❌ Failed to delete account. Please try again.";
+      alert(errorMsg);
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteModal(false);
+    }
+  };
+
+
   const handleChangePhoto = () => {
-    // Handle change photo logic
+
     console.log("Change photo clicked");
   };
 
   return (
     <div className="flex min-h-screen bg-[#f7f9fc] font-['Inter',Arial,sans-serif] text-[#1a1a1a]">
       <Sidebar />
-      <main className="flex-1 ml-20 bg-[#f7f9fc]">
+      <main className={`flex-1 bg-[#f7f9fc] transition-all duration-300 ease-in-out ${isExpanded ? "ml-64" : "ml-20"}`}>
         <div className="max-w-[1100px] mx-auto my-10 px-5">
         <header className="mb-6">
           <h1 className="text-[1.8rem] font-semibold mb-1">Settings</h1>
@@ -63,7 +153,7 @@ const Settings = () => {
           </p>
         </header>
 
-        {/* Profile Settings */}
+    
         <section className="bg-white rounded-xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.05)] mb-6 hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-shadow">
           <h2 className="text-xl font-semibold mb-4">Profile Settings</h2>
           <div className="flex items-start gap-6 flex-wrap">
@@ -159,7 +249,13 @@ const Settings = () => {
                 <button
                   type="button"
                   onClick={handleChangePassword}
-                  className="border-none rounded-lg px-[18px] py-2.5 font-medium cursor-pointer transition-colors bg-[#22c55e] text-white hover:bg-[#16a34a]"
+                  disabled={isGoogleUser}
+                  className={`border-none rounded-lg px-[18px] py-2.5 font-medium transition-colors ${
+                    isGoogleUser
+                      ? "bg-gray-400 text-white cursor-not-allowed"
+                      : "bg-[#22c55e] text-white hover:bg-[#16a34a] cursor-pointer"
+                  }`}
+                  title={isGoogleUser ? "Password change is not available for Google accounts" : ""}
                 >
                   Change Password
                 </button>
@@ -168,9 +264,8 @@ const Settings = () => {
           </div>
         </section>
 
-        {/* Financial Preferences & Notifications */}
         <section className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          {/* Financial Preferences */}
+     
           <aside className="bg-white rounded-xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.05)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-shadow">
             <h3 className="text-xl font-semibold mb-4">Financial Preferences</h3>
             <form
@@ -259,7 +354,7 @@ const Settings = () => {
             </form>
           </aside>
 
-          {/* Notifications */}
+ 
           <aside className="bg-white rounded-xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.05)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-shadow">
             <h3 className="text-xl font-semibold mb-4">Notifications</h3>
             <div className="flex flex-col gap-3">
@@ -347,7 +442,7 @@ const Settings = () => {
           </aside>
         </section>
 
-        {/* Privacy & Security */}
+
         <section className="bg-white rounded-xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.05)] mb-6 hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-shadow">
           <h3 className="text-[1.2rem] font-semibold mb-4">Privacy & Security</h3>
           <div className="flex justify-between gap-4 flex-wrap">
@@ -355,7 +450,13 @@ const Settings = () => {
               <button
                 type="button"
                 onClick={handleChangePassword}
-                className="border-none rounded-lg px-[18px] py-2.5 font-medium cursor-pointer transition-colors bg-[#22c55e] text-white hover:bg-[#16a34a] mb-1"
+                disabled={isGoogleUser}
+                className={`border-none rounded-lg px-[18px] py-2.5 font-medium transition-colors mb-1 ${
+                  isGoogleUser
+                    ? "bg-gray-400 text-white cursor-not-allowed"
+                    : "bg-[#22c55e] text-white hover:bg-[#16a34a] cursor-pointer"
+                }`}
+                title={isGoogleUser ? "Password change is not available for Google accounts" : ""}
               >
                 Change Password
               </button>
@@ -380,6 +481,16 @@ const Settings = () => {
         </section>
         </div>
       </main>
+      <DeleteAccountModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={confirmDeleteAccount}
+        isLoading={isDeleting}
+      />
+      <DeleteSuccessModal
+        isOpen={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+      />
     </div>
   );
 };

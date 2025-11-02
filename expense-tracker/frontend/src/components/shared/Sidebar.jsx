@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   HiOutlineSquares2X2,
@@ -7,11 +7,38 @@ import {
 } from "react-icons/hi2";
 import { IoRibbon, IoLogOut, IoSettings } from "react-icons/io5";
 import Logo from "../../assets/logo.png";
+import { useSidebar } from "../../contexts/SidebarContext";
 
 const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [isExpanded, setIsExpanded] = useState(false);
+  const { isExpanded, setIsExpanded } = useSidebar();
+  const timeoutRef = React.useRef(null);
+
+  // Reset sidebar to collapsed state when component mounts, route changes, or user logs in
+  React.useEffect(() => {
+    setIsExpanded(false);
+  }, [location.pathname, setIsExpanded]);
+
+  // Also reset when user logs in (listening to storage changes)
+  React.useEffect(() => {
+    const handleUserStorageChange = () => {
+      // Reset sidebar when user logs in (localStorage user is added)
+      const user = localStorage.getItem("user");
+      if (user) {
+        setIsExpanded(false);
+      }
+    };
+
+    window.addEventListener("userStorageChange", handleUserStorageChange);
+    
+    // Also check on mount
+    handleUserStorageChange();
+
+    return () => {
+      window.removeEventListener("userStorageChange", handleUserStorageChange);
+    };
+  }, [setIsExpanded]);
 
   const menuItems = [
     {
@@ -46,18 +73,49 @@ const Sidebar = () => {
   };
 
   const handleLogout = () => {
-  
-    console.log("Logout clicked");
+    // Clear user data from localStorage
+    localStorage.removeItem("user");
+    
+    // Dispatch custom event to notify App component
+    window.dispatchEvent(new Event("userStorageChange"));
+    
+    // Navigate to login
     navigate("/login");
   };
+
+  const handleMouseEnter = () => {
+    // Clear any pending collapse timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    setIsExpanded(true);
+  };
+
+  const handleMouseLeave = () => {
+    // Use a small delay to ensure the sidebar collapses even if there are child elements
+    timeoutRef.current = setTimeout(() => {
+      setIsExpanded(false);
+      timeoutRef.current = null;
+    }, 100);
+  };
+
+  // Cleanup timeout on unmount
+  React.useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <aside
       className={`fixed left-0 top-0 h-screen bg-white shadow-lg transition-all duration-300 ease-in-out z-50 ${
         isExpanded ? "w-64" : "w-20"
       }`}
-      onMouseEnter={() => setIsExpanded(true)}
-      onMouseLeave={() => setIsExpanded(false)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       style={{
         borderRadius: "0 20px 20px 0",
         boxShadow: "2px 0 8px rgba(0, 0, 0, 0.1)",

@@ -13,7 +13,7 @@ const Footer = () => {
     >
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_2.2fr] gap-12 lg:gap-20 items-start">
        
-        {/* Footer Brand */}
+       
         <div className="flex flex-col gap-6">
           <div className="flex items-center gap-4">
             <div className="w-20 h-20 relative flex-shrink-0">
@@ -27,7 +27,7 @@ const Footer = () => {
           </div>
         </div>
 
-        {/* Navigation Column */}
+      
         <div>
           <h4 className="text-lg mb-5 font-bold text-white">Navigation</h4>
           <ul className="list-none space-y-2.5">
@@ -76,7 +76,6 @@ const Footer = () => {
           </ul>
         </div>
 
-        {/* Information Column */}
         <div>
           <h4 className="text-lg mb-5 font-bold text-white">Information</h4>
           <ul className="list-none space-y-2.5">
@@ -86,7 +85,6 @@ const Footer = () => {
           </ul>
         </div>
 
-        {/* CTA Section */}
         <div className="flex flex-col gap-6 lg:col-span-1 md:col-span-2 lg:items-start md:items-center">
           <h3 className="text-[23px] leading-[1.3] m-0 font-bold text-left text-white lg:text-center md:text-center max-w-md">
             Start tracking, budgeting, and understanding your spending in a smarter way — today.

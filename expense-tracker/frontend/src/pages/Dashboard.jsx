@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "../components/shared/Sidebar";
+import { useSidebar } from "../contexts/SidebarContext";
 import {
   FaSearch,
   FaBell,
@@ -20,7 +21,8 @@ import ManIllustration from "../assets/man.svg";
 
 const Dashboard = () => {
   const [username, setUsername] = useState("User");
-  const [currentDate, setCurrentDate] = useState(new Date(2025, 9, 1)); 
+  const [currentDate, setCurrentDate] = useState(new Date(2025, 9, 1));
+  const { isExpanded } = useSidebar(); 
 
   useEffect(() => {
    
@@ -73,24 +75,12 @@ const Dashboard = () => {
   return (
     <div className="flex min-h-screen bg-[#F5F5F5] font-poppins">
       <Sidebar />
-      <main className="flex-1 ml-20 bg-[#F5F5F5]">
+      <main className={`flex-1 bg-[#F5F5F5] transition-all duration-300 ease-in-out ${isExpanded ? "ml-64" : "ml-20"}`}>
      
         <header className="bg-gray-100 shadow-sm px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-0 flex-1 max-w-md">
           
-            <div className="relative flex-1 flex items-center gap-2 bg-white shadow-md px-3 py-2" style={{ borderRadius: '15px', height: '44px' }}>
-          
-              <div className="flex-shrink-0 transform translate-x-[-10px] flex items-center justify-center  hover:opacity-90 transition" style={{ backgroundColor: '#34A853', borderRadius: '15px', width: '50px', height: '40px' }}>
-                <FaSearch className="text-white text-base" />
-              </div>
-          
-              <input
-                type="text"
-                placeholder="Search For..."
-                className="flex-1 px-4 py-2 bg-transparent focus:outline-none"
-                style={{ borderRadius: '0 15px 15px 0' }}
-              />
-            </div>
+           <h1 className="text-[40px] font-bold text-gray-800 tracking-tight">Dashboard</h1>
           </div>
           
           <div className="flex items-center gap-4">

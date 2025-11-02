@@ -1,5 +1,4 @@
 import React from "react";
-import Header from "../components/shared/Header";
 import Footer from "../components/shared/Footer";
 import "./About.css";
 import LaptopImage from "../assets/Laptopp.png";
@@ -7,8 +6,6 @@ import LaptopImage from "../assets/Laptopp.png";
 const About = () => {
   return (
     <div className="flex flex-col min-h-screen bg-white">
-      <Header />
-
       <section className="about-section">
         <div className="about-container">
           <div className="about-text">

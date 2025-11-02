@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import User from "../models/User.js";
 
-// Register new user
+
 export const register = async (req, res) => {
   const { name, email, password } = req.body;
   try {
@@ -16,7 +16,7 @@ export const register = async (req, res) => {
   }
 };
 
-// Login user
+
 export const login = async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -32,14 +32,41 @@ export const login = async (req, res) => {
   }
 };
 
-// Google login/register
+
 export const googleAuth = async (req, res) => {
   const { name, email, photoURL, uid } = req.body;
   let user = await User.findOne({ email });
+  
   if (!user) {
     user = new User({ name, email, provider: "google" });
     await user.save();
   }
+  
   res.status(200).json({ message: "✅ Google login successful", user });
 };
+
+
+export const deleteAccount = async (req, res) => {
+  const { email } = req.body;
+  try {
+    if (!email) {
+      return res.status(400).json({ error: "Email is required." });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    await User.deleteOne({ email });
+
+    res.status(200).json({ 
+      message: "✅ Account deleted successfully"
+    });
+  } catch (err) {
+    console.error("Delete account error:", err);
+    res.status(500).json({ error: "Failed to delete account." });
+  }
+};
+
 

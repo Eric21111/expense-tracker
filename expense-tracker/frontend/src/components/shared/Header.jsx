@@ -7,9 +7,9 @@ const Header = () => {
 
   return (
     <nav
-      className="flex items-center justify-between px-12 py-5 absolute top-4 left-0 w-full z-50 bg-transparent"
+      className="flex items-center justify-between px-12 py-5 fixed top-4 left-0 w-full z-[100] bg-transparent"
     >
-      <div className="flex items-center justify-center mx-auto border border-white/70 rounded-full px-2 py-1 shadow-lg shadow-gray-500/50 bg-white/20 backdrop-blur-md">
+      <div className="flex items-center justify-center mx-auto border border-white/70 rounded-full px-2 py-1 shadow-md shadow-gray-500/30 bg-white/20 backdrop-blur-md">
         <button
           onClick={() => navigate("/")}
           className={`px-6 py-1 text-sm font-medium rounded-full transition ${
@@ -33,7 +33,7 @@ const Header = () => {
           Login
         </button>
 
-        <button
+        {/* <button
           onClick={() => navigate("/about")}
           className={`px-6 py-1 text-sm font-medium rounded-full transition ${
             location.pathname === "/about"
@@ -42,7 +42,7 @@ const Header = () => {
           }`}
         >
           About
-        </button>
+        </button> */}
       </div>
     </nav>
   );

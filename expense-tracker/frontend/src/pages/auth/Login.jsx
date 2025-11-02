@@ -3,7 +3,6 @@ import axios from "axios";
 import { FcGoogle } from "react-icons/fc";
 import { FaUser, FaLock,FaEye, FaEyeSlash } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
-import Header from "../../components/shared/Header";
 import Footer from "../../components/shared/Footer";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import app from "../../firebaseConfig";
@@ -47,6 +46,9 @@ const Login = () => {
         localStorage.setItem("user", JSON.stringify({ email, name: email.split("@")[0] }));
       }
       
+      // Dispatch custom event to notify components (Header, Sidebar, etc.)
+      window.dispatchEvent(new Event("userStorageChange"));
+      
       alert(res.data.message);
       setEmail("");
       setPassword("");
@@ -75,6 +77,9 @@ const Login = () => {
         displayName: user.displayName
       }));
       
+      // Dispatch custom event to notify components (Header, Sidebar, etc.)
+      window.dispatchEvent(new Event("userStorageChange"));
+      
       alert(res.data.message);
       navigate("/dashboard");
     } catch (error) {
@@ -85,8 +90,6 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F5F5F5] font-poppins">
-      <Header />
-
       <main className="flex-1 flex items-center justify-center py-4 px-4 sm:py-6 lg:py-6">
         <div className="relative w-full max-w-[1900px] flex items-center justify-between gap-50">
 
@@ -121,7 +124,7 @@ const Login = () => {
 
          
           <div
-            className={`relative mx-auto w-full max-w-[520px] bg-white rounded-2xl top-5 shadow-2xl border border-gray-100 p-6 sm:p-8 lg:p-10 transform transition-all duration-400 ease-out
+            className={`relative mx-auto w-full max-w-[520px] bg-white rounded-2xl top-5 shadow-lg border border-gray-100 p-6 sm:p-8 lg:p-10 transform transition-all duration-400 ease-out
             ${mounted ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-10"}`}
             role="region"
           >
@@ -204,7 +207,7 @@ const Login = () => {
 
               <button
                 type="submit"
-                className="w-full mt-1 py-2.5 sm:py-3 rounded-lg text-sm sm:text-base text-white font-semibold bg-gradient-to-r from-green-400 to-green-600 shadow-md hover:shadow-lg transform hover:-translate-y-[1px] transition-all duration-200"
+                className="w-full mt-1 py-2.5 sm:py-3 rounded-lg text-sm sm:text-base text-white font-semibold bg-gradient-to-r from-green-400 to-green-600 shadow-sm hover:shadow-md transform hover:-translate-y-[1px] transition-all duration-200"
               >
                 Login
               </button>
