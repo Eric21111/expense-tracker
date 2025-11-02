@@ -38,6 +38,15 @@ const Login = () => {
         email,
         password,
       });
+      
+      // Store user data in localStorage
+      if (res.data.user) {
+        localStorage.setItem("user", JSON.stringify(res.data.user));
+      } else {
+        // If backend doesn't return user data, create a basic user object
+        localStorage.setItem("user", JSON.stringify({ email, name: email.split("@")[0] }));
+      }
+      
       alert(res.data.message);
       setEmail("");
       setPassword("");
@@ -57,6 +66,15 @@ const Login = () => {
         photoURL: user.photoURL,
         uid: user.uid,
       });
+      
+      // Store user data in localStorage
+      localStorage.setItem("user", JSON.stringify({
+        name: user.displayName,
+        email: user.email,
+        photoURL: user.photoURL,
+        displayName: user.displayName
+      }));
+      
       alert(res.data.message);
       navigate("/dashboard");
     } catch (error) {
