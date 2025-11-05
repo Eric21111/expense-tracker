@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   HiOutlineSquares2X2,
@@ -8,22 +8,26 @@ import {
 import { IoRibbon, IoLogOut, IoSettings } from "react-icons/io5";
 import Logo from "../../assets/logo.png";
 import { useSidebar } from "../../contexts/SidebarContext";
+import LogoutModal from "../LogoutModal";
+import { getAuth, signOut } from "firebase/auth";
+import app from "../../firebaseConfig";
 
 const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isExpanded, setIsExpanded } = useSidebar();
   const timeoutRef = React.useRef(null);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-  // Reset sidebar to collapsed state when component mounts, route changes, or user logs in
+ 
   React.useEffect(() => {
     setIsExpanded(false);
   }, [location.pathname, setIsExpanded]);
 
-  // Also reset when user logs in (listening to storage changes)
+
   React.useEffect(() => {
     const handleUserStorageChange = () => {
-      // Reset sidebar when user logs in (localStorage user is added)
+    
       const user = localStorage.getItem("user");
       if (user) {
         setIsExpanded(false);
@@ -32,7 +36,7 @@ const Sidebar = () => {
 
     window.addEventListener("userStorageChange", handleUserStorageChange);
     
-    // Also check on mount
+  
     handleUserStorageChange();
 
     return () => {
@@ -73,18 +77,38 @@ const Sidebar = () => {
   };
 
   const handleLogout = () => {
-    // Clear user data from localStorage
-    localStorage.removeItem("user");
-    
-    // Dispatch custom event to notify App component
-    window.dispatchEvent(new Event("userStorageChange"));
-    
-    // Navigate to login
-    navigate("/login");
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = async () => {
+    try {
+      // Sign out from Firebase if user is logged in
+      const auth = getAuth(app);
+      if (auth.currentUser) {
+        await signOut(auth);
+      }
+      
+      // Remove user from localStorage
+      localStorage.removeItem("user");
+      
+      // Dispatch custom event to notify components
+      window.dispatchEvent(new Event("userStorageChange"));
+      
+      // Close modal and navigate to login
+      setShowLogoutModal(false);
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+      // Still logout even if Firebase signOut fails
+      localStorage.removeItem("user");
+      window.dispatchEvent(new Event("userStorageChange"));
+      setShowLogoutModal(false);
+      navigate("/login");
+    }
   };
 
   const handleMouseEnter = () => {
-    // Clear any pending collapse timeout
+
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
@@ -93,14 +117,13 @@ const Sidebar = () => {
   };
 
   const handleMouseLeave = () => {
-    // Use a small delay to ensure the sidebar collapses even if there are child elements
     timeoutRef.current = setTimeout(() => {
       setIsExpanded(false);
       timeoutRef.current = null;
     }, 100);
   };
 
-  // Cleanup timeout on unmount
+
   React.useEffect(() => {
     return () => {
       if (timeoutRef.current) {
@@ -183,6 +206,12 @@ const Sidebar = () => {
           )}
         </button>
       </div>
+
+      <LogoutModal
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        onConfirm={confirmLogout}
+      />
     </aside>
   );
 };

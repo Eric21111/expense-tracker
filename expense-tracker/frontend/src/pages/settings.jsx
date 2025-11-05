@@ -145,7 +145,7 @@ const Settings = () => {
     <div className="flex min-h-screen bg-[#f7f9fc] font-['Inter',Arial,sans-serif] text-[#1a1a1a]">
       <Sidebar />
       <main className={`flex-1 bg-[#f7f9fc] transition-all duration-300 ease-in-out ${isExpanded ? "ml-64" : "ml-20"}`}>
-        <div className="max-w-[1100px] mx-auto my-10 px-5">
+        <div className="max-w-[1100px] my-10 pl-4 pr-5">
         <header className="mb-6">
           <h1 className="text-[1.8rem] font-semibold mb-1">Settings</h1>
           <p className="text-[#6b7280] text-[0.95rem] mb-6">
@@ -245,21 +245,7 @@ const Settings = () => {
                 </div>
               </div>
 
-              <div className="mt-2">
-                <button
-                  type="button"
-                  onClick={handleChangePassword}
-                  disabled={isGoogleUser}
-                  className={`border-none rounded-lg px-[18px] py-2.5 font-medium transition-colors ${
-                    isGoogleUser
-                      ? "bg-gray-400 text-white cursor-not-allowed"
-                      : "bg-[#22c55e] text-white hover:bg-[#16a34a] cursor-pointer"
-                  }`}
-                  title={isGoogleUser ? "Password change is not available for Google accounts" : ""}
-                >
-                  Change Password
-                </button>
-              </div>
+             <br />
             </form>
           </div>
         </section>

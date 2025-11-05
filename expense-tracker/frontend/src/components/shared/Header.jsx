@@ -7,15 +7,16 @@ const Header = () => {
 
   return (
     <nav
-      className="flex items-center justify-between px-12 py-5 fixed top-4 left-0 w-full z-[100] bg-transparent"
+      className="flex items-center justify-center px-12 py-5 fixed top-4 left-0 right-0 w-full z-[9999] bg-transparent pointer-events-none"
+      style={{ zIndex: 9999 }}
     >
-      <div className="flex items-center justify-center mx-auto border border-white/70 rounded-full px-2 py-1 shadow-md shadow-gray-500/30 bg-white/20 backdrop-blur-md">
+      <div className="flex items-center justify-center border border-white/70 rounded-full px-2 py-1 shadow-md shadow-gray-500/30 bg-white/20 backdrop-blur-md pointer-events-auto">
         <button
           onClick={() => navigate("/")}
           className={`px-6 py-1 text-sm font-medium rounded-full transition ${
             location.pathname === "/"
-              ? "bg-[#CCEFCC] text-black"
-              : "hover:bg-[#CCEFCC] hover:text-black"
+              ? "bg-[#CCEFCC] !text-black"
+              : "text-black hover:bg-[#CCEFCC] hover:text-black"
           }`}
         >
           Home
@@ -26,8 +27,8 @@ const Header = () => {
           className={`px-6 py-1 text-sm font-medium rounded-full transition ${
             location.pathname === "/login" ||
             location.pathname === "/register"
-              ? "bg-[#CCEFCC] text-black"
-              : "hover:bg-[#CCEFCC] hover:text-black"
+              ? "bg-[#CCEFCC] !text-black"
+              : "text-black hover:bg-[#CCEFCC] hover:text-black"
           }`}
         >
           Login

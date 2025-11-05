@@ -9,6 +9,7 @@ import { FcGoogle } from "react-icons/fc";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import app from "../../firebaseConfig";
 import PasswordInput from "../../components/PasswordInput";
+import Header from "../../components/shared/Header";
 
 
 const Register = () => {
@@ -87,6 +88,7 @@ const Register = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F5F5F5] font-poppins">
+      <Header/>
       <main className="flex-1 flex items-center justify-center py-4 px-4 sm:py-6 lg:py-6 lg:m-1">
      
           <div className="hidden lg:block relative flex-1 order-2 ">

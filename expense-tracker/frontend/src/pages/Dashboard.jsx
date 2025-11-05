@@ -139,7 +139,7 @@ const Dashboard = () => {
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <h3 className="text-3xl font-bold text-gray-800 mb-1">PHP 7,500</h3>
-                  <p className="text-sm font-semibold text-gray-700">Total Balance</p>
+                  <p className="text-base font-bold text-green-600 ">Total Balance</p>
                   <p className="text-xs text-gray-500 mt-1">Remaining funds this month.</p>
                 </div>
                 <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center absolute top-4 right-4">
@@ -153,8 +153,11 @@ const Dashboard = () => {
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <h3 className="text-3xl font-bold text-gray-800 mb-1">PHP 11,000</h3>
-                  <p className="text-sm font-semibold text-green-600">Total Expenses</p>
+                  <p className="text-base font-bold text-green-600">Total Expenses</p>
                   <p className="text-xs text-gray-500 mt-1">Spent so far this month.</p>
+                </div>
+                <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center absolute top-4 right-4">
+                  <FaPiggyBank className="text-green-600 text-2xl" />
                 </div>
               </div>
             </div>
@@ -164,7 +167,7 @@ const Dashboard = () => {
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <h3 className="text-3xl font-bold text-gray-800 mb-1">PHP 1,500</h3>
-                  <p className="text-sm font-semibold text-green-600">Total Savings</p>
+                  <p className="text-base font-bold text-green-600">Total Savings</p>
                   <p className="text-xs text-gray-500 mt-1">Saved amount this month.</p>
                 </div>
                 <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center absolute top-4 right-4">

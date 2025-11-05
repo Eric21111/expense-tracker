@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { FcGoogle } from "react-icons/fc";
+import Header from '../../components/shared/Header';
 import { FaUser, FaLock,FaEye, FaEyeSlash } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import Footer from "../../components/shared/Footer";
@@ -90,6 +91,7 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F5F5F5] font-poppins">
+      <Header/>
       <main className="flex-1 flex items-center justify-center py-4 px-4 sm:py-6 lg:py-6">
         <div className="relative w-full max-w-[1900px] flex items-center justify-between gap-50">
 

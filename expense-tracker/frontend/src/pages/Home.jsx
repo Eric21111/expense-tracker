@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Monitor1 from '../assets/home/Monitor_1.svg';
+import Header from '../components/shared/Header';
 import IconPiggyBank from '../assets/home/icon-piggybank.svg';
 import IconSpending from '../assets/home/icon-spending.svg';
 import IconAIInsights from '../assets/home/icon-AIinsights.svg';
@@ -57,6 +58,7 @@ const Home = () => {
   
   return (
     <div className="font-poppins bg-[#f5f5f5] overflow-x-hidden pt-20">
+      <Header/>
   <section 
         className="rounded-[50px] mx-[150px] my-5 p-[80px_60px] flex items-center justify-between min-h-[700px] shadow-[0_20px_40px_rgba(0,0,0,0.15)] relative overflow-visible"
         style={{
