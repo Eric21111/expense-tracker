@@ -1,18 +1,20 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { FcGoogle } from "react-icons/fc";
-import Header from '../../components/shared/Header';
-import { FaUser, FaLock,FaEye, FaEyeSlash } from "react-icons/fa";
+import Header from "../../components/shared/Header";
+import { FaUser, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import Footer from "../../components/shared/Footer";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import app from "../../firebaseConfig";
 import Logo from "../../assets/logo.png";
-import WalletIllustration from "../../assets/wallet.png"; 
+import WalletIllustration from "../../assets/wallet.png";
 import PasswordInput from "../../components/PasswordInput";
 import ForgotPasswordModal from "../../components/ForgotPasswordModal";
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet"></link>
-
+<link
+  href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap"
+  rel="stylesheet"
+></link>;
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -38,19 +40,21 @@ const Login = () => {
         email,
         password,
       });
-      
+
       // Store user data in localStorage
       if (res.data.user) {
         localStorage.setItem("user", JSON.stringify(res.data.user));
       } else {
         // If backend doesn't return user data, create a basic user object
-        localStorage.setItem("user", JSON.stringify({ email, name: email.split("@")[0] }));
+        localStorage.setItem(
+          "user",
+          JSON.stringify({ email, name: email.split("@")[0] })
+        );
       }
-      
+
       // Dispatch custom event to notify components (Header, Sidebar, etc.)
       window.dispatchEvent(new Event("userStorageChange"));
-      
-      alert(res.data.message);
+
       setEmail("");
       setPassword("");
       navigate("/dashboard");
@@ -69,18 +73,21 @@ const Login = () => {
         photoURL: user.photoURL,
         uid: user.uid,
       });
-      
+
       // Store user data in localStorage
-      localStorage.setItem("user", JSON.stringify({
-        name: user.displayName,
-        email: user.email,
-        photoURL: user.photoURL,
-        displayName: user.displayName
-      }));
-      
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          name: user.displayName,
+          email: user.email,
+          photoURL: user.photoURL,
+          displayName: user.displayName,
+        })
+      );
+
       // Dispatch custom event to notify components (Header, Sidebar, etc.)
       window.dispatchEvent(new Event("userStorageChange"));
-      
+
       alert(res.data.message);
       navigate("/dashboard");
     } catch (error) {
@@ -91,11 +98,9 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F5F5F5] font-poppins">
-      <Header/>
+      <Header />
       <main className="flex-1 flex items-center justify-center py-4 px-4 sm:py-6 lg:py-6">
         <div className="relative w-full max-w-[1900px] flex items-center justify-between gap-50">
-
-         
           <div className="hidden lg:block relative flex-1">
             <div
               aria-hidden
@@ -111,27 +116,32 @@ const Login = () => {
               }}
             />
             <h1 className="absolute left-10 top-48 text-6xl font-semibold leading-tight text-white">
-              Make <span className="text-[#FFE082]"><br />Every</span> Peso <br />
+              Make{" "}
+              <span className="text-[#FFE082]">
+                <br />
+                Every
+              </span>{" "}
+              Peso <br />
               Count <br />
               <span className="text-white">(Literally!)</span>
             </h1>
           </div>
-          
-       
+
           <img
             src={WalletIllustration}
             alt="wallet"
             className="hidden lg:block absolute left-90 top-40 w-[900px] h-auto pointer-events-none"
           />
 
-         
           <div
             className={`relative mx-auto w-full max-w-[520px] bg-white rounded-2xl top-5 shadow-lg border border-gray-100 p-6 sm:p-8 lg:p-10 transform transition-all duration-400 ease-out
-            ${mounted ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-10"}`}
+            ${
+              mounted
+                ? "opacity-100 translate-x-0"
+                : "opacity-0 -translate-x-10"
+            }`}
             role="region"
           >
-
-
             <div className="flex flex-col items-center mb-4 sm:mb-6">
               <img
                 src={Logo}
@@ -145,7 +155,9 @@ const Login = () => {
 
             <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
               <div>
-                <label className="block text-xs sm:text-sm text-gray-700 mb-2">Email</label>
+                <label className="block text-xs sm:text-sm text-gray-700 mb-2">
+                  Email
+                </label>
                 <div className="flex items-stretch rounded-xl overflow-hidden border border-green-300 shadow-sm">
                   <div className="flex items-center justify-center bg-green-500 px-3 sm:px-4">
                     <FaUser className="text-white text-sm sm:text-base" />
@@ -182,7 +194,11 @@ const Login = () => {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-green-600 focus:outline-none"
                   >
-                    {showPassword ? <FaEyeSlash size={16} /> : <FaEye size={16} />}
+                    {showPassword ? (
+                      <FaEyeSlash size={16} />
+                    ) : (
+                      <FaEye size={16} />
+                    )}
                   </button>
                 </div>
               </div>
@@ -236,12 +252,10 @@ const Login = () => {
         </div>
       </main>
 
-    
       <ForgotPasswordModal
         isOpen={showForgotPasswordModal}
         onClose={() => setShowForgotPasswordModal(false)}
       />
-   
     </div>
   );
 };
