@@ -7,6 +7,7 @@ import Home from "./pages/Home"
 import About from "./pages/About"
 import Dashboard from "./pages/Dashboard"
 import Settings from "./pages/settings"
+import Transaction from "./pages/TransactionsPage"
 
 function AppContent() {
   return (
@@ -18,6 +19,7 @@ function AppContent() {
         <Route path="/about" element={<About />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/transaction" element={<Transaction />} />
       </Routes>
     </div>
   );

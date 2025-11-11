@@ -4,6 +4,8 @@ import cors from "cors";
 import connectDB from "./config/database.js";
 import authRoutes from "./routes/authRoutes.js";
 import passwordRoutes from "./routes/passwordRoutes.js";
+import transactionRoutes from "./routes/transactionRoutes.js";
+import aiInsightsRoutes from "./routes/aiInsightsRoutes.js";
 import transporter from "./utils/emailService.js";
 const app = express();
 app.use(cors());
@@ -33,6 +35,8 @@ app.get("/test-email", async (req, res) => {
 
 app.use("/users", authRoutes);
 app.use("/users", passwordRoutes);
+app.use("/transactions", transactionRoutes);
+app.use("/ai-insights", aiInsightsRoutes);
 
 // Start server
 const PORT = process.env.PORT || 5000;
