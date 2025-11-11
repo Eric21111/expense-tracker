@@ -1,6 +1,5 @@
 const API_BASE_URL = "http://localhost:5000";
 
-// Helper function to get user email from localStorage
 const getUserEmail = () => {
   try {
     const user = localStorage.getItem("user");
@@ -14,7 +13,6 @@ const getUserEmail = () => {
   return null;
 };
 
-// Create headers with user email
 const getHeaders = () => {
   const userEmail = getUserEmail();
   return {
@@ -23,7 +21,6 @@ const getHeaders = () => {
   };
 };
 
-// Get AI-generated insights
 export const getAIInsights = async () => {
   try {
     const response = await fetch(`${API_BASE_URL}/ai-insights`, {

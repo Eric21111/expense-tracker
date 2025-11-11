@@ -17,7 +17,6 @@ const ResetPasswordModal = ({ isOpen, onClose, email, verificationCode }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validation
     if (!newPassword || !confirmPassword) {
       setMessage("Please fill in all fields.");
       setMessageType("error");

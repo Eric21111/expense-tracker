@@ -1,10 +1,9 @@
 import Transaction from "../models/Transaction.js";
 
-// Create a new transaction
 export const createTransaction = async (req, res) => {
   try {
     const { type, category, amount, account, date, description, photos, icon, bgGradient } = req.body;
-    const userId = req.userId; // Assuming you have authentication middleware that sets userId
+    const userId = req.userId;
 
     const transaction = new Transaction({
       userId,
@@ -26,13 +25,11 @@ export const createTransaction = async (req, res) => {
   }
 };
 
-// Get all transactions for a user
 export const getTransactions = async (req, res) => {
   try {
     const userId = req.userId;
     const { type, startDate, endDate, category } = req.query;
 
-    // Build filter object
     const filter = { userId };
     
     if (type && type !== "all") {
@@ -56,7 +53,6 @@ export const getTransactions = async (req, res) => {
   }
 };
 
-// Get a single transaction by ID
 export const getTransactionById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -74,7 +70,6 @@ export const getTransactionById = async (req, res) => {
   }
 };
 
-// Update a transaction
 export const updateTransaction = async (req, res) => {
   try {
     const { id } = req.params;
@@ -97,7 +92,6 @@ export const updateTransaction = async (req, res) => {
   }
 };
 
-// Delete a transaction
 export const deleteTransaction = async (req, res) => {
   try {
     const { id } = req.params;
@@ -115,7 +109,6 @@ export const deleteTransaction = async (req, res) => {
   }
 };
 
-// Get transaction summary (totals for income and expenses)
 export const getTransactionSummary = async (req, res) => {
   try {
     const userId = req.userId;
@@ -149,17 +142,13 @@ export const getTransactionSummary = async (req, res) => {
 
     summary.totalBalance = summary.totalIncome - summary.totalExpense;
 
-    // Calculate average daily spending from first transaction date to today
     if (transactions.length > 0) {
-      // Get the earliest transaction date
       const dates = transactions.map(t => new Date(t.date));
       const firstTransactionDate = new Date(Math.min(...dates));
       firstTransactionDate.setHours(0, 0, 0, 0);
       
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      
-      // If endDate is provided and it's before today, use endDate
       let effectiveEnd = today;
       if (endDate) {
         const end = new Date(endDate);
@@ -169,10 +158,7 @@ export const getTransactionSummary = async (req, res) => {
         }
       }
       
-      // Calculate days from first transaction to today (or end of period)
       const daysDifference = Math.floor((effectiveEnd - firstTransactionDate) / (1000 * 60 * 60 * 24)) + 1;
-      
-      // Calculate average: total spending / days since first transaction
       summary.averageDailySpending = daysDifference > 0 ? summary.totalExpense / daysDifference : 0;
     }
 

@@ -1,6 +1,5 @@
 import User from "../models/User.js";
 
-// Simple auth middleware - checks if user email is provided
 export const authenticate = async (req, res, next) => {
   try {
     const userEmail = req.headers['x-user-email'] || req.body.userEmail;
@@ -21,7 +20,6 @@ export const authenticate = async (req, res, next) => {
       });
     }
 
-    // Attach userId to request object for use in controllers
     req.userId = user._id;
     req.userEmail = user.email;
     next();

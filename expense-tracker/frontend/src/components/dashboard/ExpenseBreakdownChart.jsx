@@ -121,14 +121,14 @@ const ExpenseBreakdownChart = ({ dateRange }) => {
       ) : (
       <div className="grid grid-cols-1 md:grid-cols-[1.3fr_0.7fr] gap-6">
        
-        <div className="relative" style={{ height: "240px" }}>
-          <ResponsiveContainer width="100%" height="100%">
+        <div className="relative" style={{ height: "240px", minHeight: "240px", minWidth: "0" }}>
+          <ResponsiveContainer width="100%" height="100%" minHeight={240}>
             <BarChart
               data={chartData}
               margin={{
                 top: 20,
                 right: 0,
-                left: -25,
+                left: 5,
                 bottom: 0,
               }}
             >
@@ -164,21 +164,22 @@ const ExpenseBreakdownChart = ({ dateRange }) => {
                 </linearGradient>
               </defs>
 
-              <CartesianGrid vertical={false} stroke="#e5e7eb" />
+              <CartesianGrid vertical={false} stroke="#6b7280" strokeDasharray="2 2" />
               <XAxis
                 dataKey="name"
                 axisLine={false}
                 tickLine={false}
-                tick={{ fontSize: 12, fill: "#4b5563", fontWeight: 500 }}
+                tick={{ fontSize: 15, fill: "#000000", fontWeight: 900, fontFamily: "Arial, sans-serif" }}
                 dy={10}
               />
               <YAxis
                 domain={[0, maxValue]}
-                ticks={Array.from({ length: 6 }, (_, i) => (maxValue / 5) * i)}
+                ticks={[0, Math.round(maxValue * 0.2), Math.round(maxValue * 0.4), Math.round(maxValue * 0.6), Math.round(maxValue * 0.8), maxValue]}
                 axisLine={false}
                 tickLine={false}
-                tick={{ fontSize: 12, fill: "#6b7281", fontWeight: 500 }}
-                width={45}
+                tick={{ fontSize: 17, fill: "#000000", fontWeight: 900, fontFamily: "Arial Black, sans-serif" }}
+                width={85}
+                tickFormatter={(value) => value.toLocaleString()}
               />
               <Tooltip
                 content={<CustomTooltip />}
@@ -202,22 +203,22 @@ const ExpenseBreakdownChart = ({ dateRange }) => {
 
       
         <div className="flex flex-col justify-center h-full">
-          <h3 className="text-xl font-bold text-green-600 mb-4">
+          <h3 className="text-base font-bold text-green-600 mb-3">
             Top 3 Spending
           </h3>
-          <div className="space-y-3">
+          <div className="space-y-2">
             {top3.length > 0 ? (
               top3.map((item, index) => (
                 <div key={index} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-gray-800 font-medium">{index + 1}.</span>
-                    <p className="text-gray-800 font-medium">{item.name}</p>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm text-gray-800 font-medium">{index + 1}.</span>
+                    <p className="text-sm text-gray-800 font-medium">{item.name}</p>
                   </div>
-                  <p className="text-gray-800 font-medium">PHP {item.value.toLocaleString()}</p>
+                  <p className="text-sm text-gray-800 font-medium">PHP {item.value.toLocaleString()}</p>
                 </div>
               ))
             ) : (
-              <p className="text-gray-600 text-sm">No data available</p>
+              <p className="text-gray-600 text-xs">No data available</p>
             )}
           </div>
         </div>

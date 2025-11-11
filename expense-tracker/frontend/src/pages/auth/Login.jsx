@@ -41,18 +41,15 @@ const Login = () => {
         password,
       });
 
-      // Store user data in localStorage
       if (res.data.user) {
         localStorage.setItem("user", JSON.stringify(res.data.user));
       } else {
-        // If backend doesn't return user data, create a basic user object
         localStorage.setItem(
           "user",
           JSON.stringify({ email, name: email.split("@")[0] })
         );
       }
 
-      // Dispatch custom event to notify components (Header, Sidebar, etc.)
       window.dispatchEvent(new Event("userStorageChange"));
 
       setEmail("");
@@ -74,7 +71,6 @@ const Login = () => {
         uid: user.uid,
       });
 
-      // Store user data in localStorage
       localStorage.setItem(
         "user",
         JSON.stringify({
@@ -85,7 +81,6 @@ const Login = () => {
         })
       );
 
-      // Dispatch custom event to notify components (Header, Sidebar, etc.)
       window.dispatchEvent(new Event("userStorageChange"));
 
       alert(res.data.message);

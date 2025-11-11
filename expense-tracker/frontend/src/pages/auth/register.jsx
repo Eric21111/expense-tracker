@@ -38,13 +38,11 @@ const Register = () => {
         password,
       });
       
-      // Store user data in localStorage
       localStorage.setItem("user", JSON.stringify({
         name: `${firstName} ${lastName}`,
         email: email
       }));
       
-      // Dispatch custom event to notify components (Header, Sidebar, etc.)
       window.dispatchEvent(new Event("userStorageChange"));
       
       alert(res.data.message);
@@ -67,7 +65,6 @@ const Register = () => {
         uid: user.uid,
       });
       
-      // Store user data in localStorage
       localStorage.setItem("user", JSON.stringify({
         name: user.displayName,
         email: user.email,
@@ -75,7 +72,6 @@ const Register = () => {
         displayName: user.displayName
       }));
       
-      // Dispatch custom event to notify components (Header, Sidebar, etc.)
       window.dispatchEvent(new Event("userStorageChange"));
       
       alert(res.data.message);

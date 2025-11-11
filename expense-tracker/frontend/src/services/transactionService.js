@@ -1,6 +1,5 @@
 const API_BASE_URL = "http://localhost:5000";
 
-// Helper function to get user email from localStorage
 const getUserEmail = () => {
   try {
     const user = localStorage.getItem("user");
@@ -14,7 +13,6 @@ const getUserEmail = () => {
   return null;
 };
 
-// Create headers with user email
 const getHeaders = () => {
   const userEmail = getUserEmail();
   return {
@@ -23,7 +21,6 @@ const getHeaders = () => {
   };
 };
 
-// Get all transactions with optional filters
 export const getTransactions = async (filters = {}) => {
   try {
     const queryParams = new URLSearchParams();
@@ -61,7 +58,6 @@ export const getTransactions = async (filters = {}) => {
   }
 };
 
-// Get transaction summary
 export const getTransactionSummary = async (filters = {}) => {
   try {
     const queryParams = new URLSearchParams();
@@ -93,7 +89,6 @@ export const getTransactionSummary = async (filters = {}) => {
   }
 };
 
-// Create a new transaction
 export const createTransaction = async (transactionData) => {
   try {
     const response = await fetch(`${API_BASE_URL}/transactions`, {
@@ -115,7 +110,6 @@ export const createTransaction = async (transactionData) => {
   }
 };
 
-// Update a transaction
 export const updateTransaction = async (id, transactionData) => {
   try {
     const response = await fetch(`${API_BASE_URL}/transactions/${id}`, {
@@ -137,7 +131,6 @@ export const updateTransaction = async (id, transactionData) => {
   }
 };
 
-// Delete a transaction
 export const deleteTransaction = async (id) => {
   try {
     const response = await fetch(`${API_BASE_URL}/transactions/${id}`, {
@@ -158,7 +151,6 @@ export const deleteTransaction = async (id) => {
   }
 };
 
-// Get a single transaction by ID
 export const getTransactionById = async (id) => {
   try {
     const response = await fetch(`${API_BASE_URL}/transactions/${id}`, {

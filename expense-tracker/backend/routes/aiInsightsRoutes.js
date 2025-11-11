@@ -4,7 +4,6 @@ import { authenticate } from "../middleware/auth.js";
 
 const router = express.Router();
 
-// Get AI-generated insights (requires authentication)
 router.get("/", authenticate, getAIInsights);
 
 export default router;

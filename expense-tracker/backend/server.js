@@ -38,6 +38,5 @@ app.use("/users", passwordRoutes);
 app.use("/transactions", transactionRoutes);
 app.use("/ai-insights", aiInsightsRoutes);
 
-// Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

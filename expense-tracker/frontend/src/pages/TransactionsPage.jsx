@@ -42,15 +42,22 @@ const TransactionsPage = () => {
 
 
   useEffect(() => {
-   
-    if (Object.keys(dateFilters).length === 0) {
-      return;
-    }
-
     const fetchStats = async () => {
       try {
         setLoading(true);
-        const response = await getTransactionSummary(dateFilters);
+        
+        let filters = dateFilters;
+        if (Object.keys(dateFilters).length === 0) {
+          const now = new Date();
+          const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+          const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+          filters = {
+            startDate: startOfMonth.toISOString(),
+            endDate: endOfMonth.toISOString()
+          };
+        }
+        
+        const response = await getTransactionSummary(filters);
         if (response.success) {
           setTransactionCount(response.summary.transactionCount || 0);
           setAverageDailySpending(response.summary.averageDailySpending || 0);

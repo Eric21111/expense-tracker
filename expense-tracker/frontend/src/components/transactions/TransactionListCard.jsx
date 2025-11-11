@@ -1,69 +1,62 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { FaChevronLeft, FaChevronRight, FaSlidersH } from "react-icons/fa";
-// Import SVGs for transaction categories (these paths are assumed to exist)
+import { getTransactions } from "../../services/transactionService";
 import SalaryIcon from "../../assets/categories/salary.svg";
 import GiftIcon from "../../assets/categories/gift.svg";
 import BillsIcon from "../../assets/categories/bills.svg";
 import TransportationIcon from "../../assets/categories/transportation.svg";
 import ShoppingIcon from "../../assets/categories/shopping.svg";
 
-const TransactionListCard = () => {
+const TransactionListCard = ({ refreshTrigger, onDateFilterChange }) => {
   const [activeTab, setActiveTab] = useState("All");
-  const [activePeriod, setActivePeriod] = useState("Month"); // Day, Week, Month, Year, Period
+  const [activePeriod, setActivePeriod] = useState("Month");
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [currentDate, setCurrentDate] = useState(new Date());
 
-  // Placeholder data for transactions
-  const transactions = [
-    {
-      id: 1,
-      category: "Salary",
-      description: "",
-      amount: 30000,
-      date: "11/02/25",
-      type: "income",
-      icon: SalaryIcon,
-      bgGradient: "linear-gradient(to bottom right, #FFA726, #FF8A00)", // Orange gradient
-    },
-    {
-      id: 2,
-      category: "Gift",
-      description: "",
-      amount: 5000,
-      date: "11/02/25",
-      type: "income",
-      icon: GiftIcon,
-      bgGradient: "linear-gradient(to bottom right, #FF7043, #FF5722)", // Red-Orange gradient
-    },
-    {
-      id: 3,
-      category: "Bills",
-      description: "",
-      amount: -5000,
-      date: "11/02/25",
-      type: "expense",
-      icon: BillsIcon,
-      bgGradient: "linear-gradient(to bottom right, #AB47BC, #9C27B0)", // Purple gradient
-    },
-    {
-      id: 4,
-      category: "Transportation",
-      description: "Maxim",
-      amount: -4000,
-      date: "11/02/25",
-      type: "expense",
-      icon: TransportationIcon,
-      bgGradient: "linear-gradient(to bottom right, #42A5F5, #2196F3)", // Blue gradient
-    },
-    {
-      id: 5,
-      category: "Shopping",
-      description: "",
-      amount: -3000,
-      date: "11/02/25",
-      type: "expense",
-      icon: ShoppingIcon,
-      bgGradient: "linear-gradient(to bottom right, #EC407A, #E91E63)", 
-    },
-  ];
+  const categoryConfig = {
+    "Salary": { icon: SalaryIcon, gradient: "linear-gradient(to bottom right, #FFA726, #FF8A00)" },
+    "Gift": { icon: GiftIcon, gradient: "linear-gradient(to bottom right, #FF7043, #FF5722)" },
+    "Food": { icon: ShoppingIcon, gradient: "linear-gradient(to bottom right, #FB923C, #EA580C)" },
+    "Transportation": { icon: TransportationIcon, gradient: "linear-gradient(to bottom right, #60A5FA, #2563EB)" },
+    "Bills": { icon: BillsIcon, gradient: "linear-gradient(to bottom right, #C084FC, #9333EA)" },
+    "Entertainment": { icon: ShoppingIcon, gradient: "linear-gradient(to bottom right, #FBBF24, #F59E0B)" },
+    "Shopping": { icon: ShoppingIcon, gradient: "linear-gradient(to bottom right, #EC407A, #E91E63)" },
+    "Grocery": { icon: ShoppingIcon, gradient: "linear-gradient(to bottom right, #66BB6A, #4CAF50)" },
+    "Others": { icon: ShoppingIcon, gradient: "linear-gradient(to bottom right, #4ade80, #22c55e)" },
+  };
+
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      try {
+        setLoading(true);
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        
+        const filters = {
+          startDate: startOfMonth.toISOString(),
+          endDate: endOfMonth.toISOString()
+        };
+        
+        const response = await getTransactions(filters);
+        if (response.success) {
+          setTransactions(response.transactions || []);
+        }
+        
+        if (onDateFilterChange) {
+          onDateFilterChange(filters);
+        }
+      } catch (error) {
+        console.error("Error fetching transactions:", error);
+        setTransactions([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTransactions();
+  }, [refreshTrigger]);
 
   
   const filteredTransactions = useMemo(() => {
@@ -86,14 +79,17 @@ const TransactionListCard = () => {
     return filteredTransactions.reduce((sum, t) => sum + t.amount, 0);
   }, [filteredTransactions]); 
 
-  const renderCategoryIcon = (iconPath, bgGradient) => {
+  const renderCategoryIcon = (transaction) => {
+    const config = categoryConfig[transaction.category] || 
+                   { icon: ShoppingIcon, gradient: "linear-gradient(to bottom right, #4ade80, #22c55e)" };
+    
     return (
       <div
         className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-        style={{ background: bgGradient }}
+        style={{ background: config.gradient }}
       >
         <img
-          src={iconPath}
+          src={config.icon}
           alt="Category Icon"
           className="w-5 h-5 filter brightness-0 invert"
         />
@@ -185,15 +181,20 @@ const TransactionListCard = () => {
       </div>
 
     
-      <div className="space-y-4">
-        {filteredTransactions.map((transaction) => (
-          <div key={transaction.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg shadow-sm">
-            <div className="flex items-center gap-3">
-              {renderCategoryIcon(transaction.icon, transaction.bgGradient)}
-              <div>
-                <p className="font-semibold text-gray-800">{transaction.category}</p>
-                {transaction.description && (
-                  <p className="text-sm text-gray-500">{transaction.description}</p>
+      <div className="space-y-4 max-h-96 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+        {loading ? (
+          <p className="text-center text-gray-500 py-4">Loading transactions...</p>
+        ) : filteredTransactions.length === 0 ? (
+          <p className="text-center text-gray-500 py-4">No transactions found</p>
+        ) : (
+          filteredTransactions.map((transaction) => (
+            <div key={transaction._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg shadow-sm hover:bg-gray-100 transition-colors">
+              <div className="flex items-center gap-3">
+                {renderCategoryIcon(transaction)}
+                <div>
+                  <p className="font-semibold text-gray-800">{transaction.category}</p>
+                  {transaction.description && (
+                    <p className="text-sm text-gray-500">{transaction.description}</p>
                 )}
               </div>
             </div>
@@ -205,10 +206,11 @@ const TransactionListCard = () => {
               >
                 {transaction.amount > 0 ? "+" : ""}PHP {Math.abs(transaction.amount).toLocaleString()}
               </p>
-              <p className="text-sm text-gray-500">{transaction.date}</p>
+              <p className="text-sm text-gray-500">{new Date(transaction.date).toLocaleDateString()}</p>
             </div>
           </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );

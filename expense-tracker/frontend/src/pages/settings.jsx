@@ -109,9 +109,7 @@ const Settings = () => {
         email,
       });
 
-   
       localStorage.removeItem("user");
-      
       
       const auth = getAuth(app);
       if (auth.currentUser) {
