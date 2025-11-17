@@ -23,11 +23,41 @@ const getDaysInMonth = (date) => {
   return days;
 };
 
-const DashboardCalendar = ({ onDateRangeChange }) => {
+const DashboardCalendar = ({ onDateRangeChange, viewType = "Monthly" }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [isSelectingRange, setIsSelectingRange] = useState(false);
+
+  React.useEffect(() => {
+    const today = new Date();
+    let start, end;
+
+    switch (viewType) {
+      case "Daily":
+        start = new Date(today);
+        end = new Date(today);
+        break;
+      case "Weekly":
+        const dayOfWeek = today.getDay();
+        start = new Date(today);
+        start.setDate(today.getDate() - dayOfWeek);
+        end = new Date(today);
+        end.setDate(today.getDate() + (6 - dayOfWeek));
+        break;
+      case "Monthly":
+      default:
+        start = new Date(today.getFullYear(), today.getMonth(), 1);
+        end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        break;
+    }
+
+    setStartDate(start);
+    setEndDate(end);
+    if (onDateRangeChange) {
+      onDateRangeChange({ start, end });
+    }
+  }, [viewType]);
 
   const changeMonth = (direction) => {
     setCurrentDate(
@@ -130,6 +160,16 @@ const DashboardCalendar = ({ onDateRangeChange }) => {
       style={{ borderRadius: "30px" }}
     >
       <div>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+              {viewType} View
+            </span>
+            <span className="px-2 py-0.5 bg-green-100 text-green-600 text-xs font-medium rounded-full">
+              Active
+            </span>
+          </div>
+        </div>
         <div className="flex items-center justify-between mb-4">
           <button
             onClick={() => changeMonth(-1)}
@@ -148,7 +188,7 @@ const DashboardCalendar = ({ onDateRangeChange }) => {
           </button>
         </div>
 
-        <div className="grid grid-cols-7 gap-1 mb-2">
+        <div className="grid grid-cols-7 mb-2">
           {daysOfWeek.map((day) => (
             <div
               key={day}
@@ -159,7 +199,7 @@ const DashboardCalendar = ({ onDateRangeChange }) => {
           ))}
         </div>
 
-        <div className="grid grid-cols-7 gap-1">
+        <div className="grid grid-cols-7">
           {calendarDays.map((day, index) => {
             const inRange = isDateInRange(day);
             const isStart = isStartDate(day);
@@ -169,17 +209,29 @@ const DashboardCalendar = ({ onDateRangeChange }) => {
               <div
                 key={index}
                 onClick={() => handleDayClick(day)}
-                className={`flex items-center justify-center text-sm transition ${
+                className={`relative flex items-center justify-center text-sm transition h-8 mt-1 ${
                   day === null
                     ? ""
-                    : isStart || isEnd
-                    ? "bg-green-600 text-white font-bold cursor-pointer w-10 h-10 rounded-full mx-auto"
                     : inRange
-                    ? "bg-green-200 text-gray-800 font-semibold cursor-pointer py-2"
-                    : "hover:bg-gray-100 cursor-pointer rounded py-2"
+                    ? "bg-green-100 cursor-pointer"
+                    : "hover:bg-gray-50 cursor-pointer rounded-lg"
+                } ${
+                  inRange && isStart ? "rounded-l-lg" : ""
+                } ${
+                  inRange && isEnd ? "rounded-r-lg" : ""
                 }`}
               >
-                {day}
+                {day && (isStart || isEnd) && (
+                  <div className="w-8 h-8 bg-green-500 text-white font-medium rounded-full flex items-center justify-center relative z-10">
+                    {day}
+                  </div>
+                )}
+                {day && !isStart && !isEnd && inRange && (
+                  <span className="text-gray-900 font-medium">{day}</span>
+                )}
+                {day && !inRange && !isStart && !isEnd && (
+                  <span className="text-gray-600 font-normal">{day}</span>
+                )}
               </div>
             );
           })}

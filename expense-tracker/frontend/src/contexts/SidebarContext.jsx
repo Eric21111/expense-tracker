@@ -12,9 +12,15 @@ export const useSidebar = () => {
 
 export const SidebarProvider = ({ children }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <SidebarContext.Provider value={{ isExpanded, setIsExpanded }}>
+    <SidebarContext.Provider value={{ 
+      isExpanded, 
+      setIsExpanded,
+      isMobileMenuOpen,
+      setIsMobileMenuOpen 
+    }}>
       {children}
     </SidebarContext.Provider>
   );

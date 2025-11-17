@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "../components/shared/Sidebar";
 import Header from "../components/shared/Header2";
-import { useSidebar } from "../contexts/SidebarContext";
+import { useSidebar } from '../contexts/SidebarContext';
+import { useCurrency } from '../contexts/CurrencyContext';
 import { FaHandHoldingUsd, FaCoins } from "react-icons/fa";
 
 import TransactionSummaryCard from "../components/transactions/TransactionSummaryCard";
@@ -14,6 +15,7 @@ import { getTransactionSummary } from "../services/transactionService";
 const TransactionsPage = () => {
   const [username, setUsername] = useState("User");
   const { isExpanded } = useSidebar();
+  const { formatAmount, getCurrencySymbol } = useCurrency();
   
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -73,32 +75,32 @@ const TransactionsPage = () => {
   }, [refreshTrigger, dateFilters]);
 
   return (
-    <div className="flex min-h-screen bg-[#F5F5F5] font-poppins">
+    <div className="flex min-h-screen bg-[#F5F5F5] font-poppins relative">
       <Sidebar />
       <main
-        className={`flex-1 bg-[#F5F5F5] transition-all duration-300 ease-in-out ${
-          isExpanded ? "ml-64" : "ml-20"
-        }`}
+        className={`flex-1 bg-[#F5F5F5] transition-all duration-300 ease-in-out relative z-0 ${
+          isExpanded ? "lg:ml-64" : "lg:ml-20"
+        } ml-0`}
       >
         <Header username={username} title="Transactions" />
 
-        <div className="p-8 grid grid-cols-1 lg:grid-cols-5 gap-6">
-          <div className="lg:col-span-3">
+        <div className="p-4 sm:p-6 lg:p-8 grid grid-cols-1 xl:grid-cols-5 gap-4 sm:gap-6">
+          <div className="xl:col-span-3">
             <TransactionListCard 
               refreshTrigger={refreshTrigger}
               onDateFilterChange={setDateFilters}
             />
           </div>
 
-          <div className="lg:col-span-2 space-y-6">
+          <div className="xl:col-span-2 space-y-4 sm:space-y-6">
             <TransactionSummaryCard 
               refreshTrigger={refreshTrigger}
               dateFilters={dateFilters}
             />
 
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               <StatCard
-                icon={<FaHandHoldingUsd className="text-xl" />}
+                icon={<FaHandHoldingUsd className="text-lg sm:text-xl" />}
                 value={loading ? "..." : transactionCount.toString()}
                 title="Number of Transactions"
                 subtitle="Total transactions this month"
@@ -106,10 +108,10 @@ const TransactionsPage = () => {
                 titleColor="#10B981"
               />
               <StatCard
-                icon={<FaCoins className="text-xl" />}
-                value={loading ? "..." : `PHP ${Math.round(averageDailySpending).toLocaleString()}`}
+                icon={<FaCoins className="text-lg sm:text-xl" />}
+                value={loading ? "..." : formatAmount(Math.round(averageDailySpending))}
                 title="Average Daily Spending"
-                subtitle="Average amount spent per day"
+                subtitle="Average on days with expenses"
                 iconColor="#10B981"
                 titleColor="#10B981"
               />
@@ -118,9 +120,9 @@ const TransactionsPage = () => {
           
             <button
               onClick={() => setIsModalOpen(true)} 
-              className="fixed bottom-8 right-8 w-14 h-14 bg-green-500 hover:bg-green-600 text-white rounded-full flex items-center justify-center shadow-lg transform transition-transform duration-200 hover:scale-110"
+              className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 lg:bottom-8 lg:right-8 w-12 h-12 sm:w-14 sm:h-14 bg-green-500 hover:bg-green-600 text-white rounded-full flex items-center justify-center shadow-lg transform transition-transform duration-200 hover:scale-110 z-10"
             >
-              <span className="text-3xl">+</span>
+              <span className="text-2xl sm:text-3xl">+</span>
             </button>
           </div>
         </div>

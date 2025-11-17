@@ -10,6 +10,7 @@ import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import app from "../../firebaseConfig";
 import PasswordInput from "../../components/PasswordInput";
 import Header from "../../components/shared/Header";
+import EmailVerificationModal from "../../components/EmailVerificationModal";
 
 
 const Register = () => {
@@ -18,6 +19,9 @@ const Register = () => {
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [userDataForVerification, setUserDataForVerification] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -28,9 +32,10 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!firstName || !lastName || !email || !password) {
-      return alert("Please fill in all fields.");
+      return;
     }
 
+    setIsLoading(true);
     try {
       const res = await axios.post("http://localhost:5000/users/register", {
         name: `${firstName} ${lastName}`,
@@ -38,17 +43,29 @@ const Register = () => {
         password,
       });
       
-      localStorage.setItem("user", JSON.stringify({
-        name: `${firstName} ${lastName}`,
-        email: email
-      }));
       
-      window.dispatchEvent(new Event("userStorageChange"));
+      if (res.data.requiresVerification) {
       
-      alert(res.data.message);
-      navigate("/dashboard");
+        setUserDataForVerification({
+          name: `${firstName} ${lastName}`,
+          email: email
+        });
+        
+        setShowVerificationModal(true);
+        
+      } else {
+        localStorage.setItem("user", JSON.stringify({
+          name: `${firstName} ${lastName}`,
+          email: email
+        }));
+        
+        window.dispatchEvent(new Event("userStorageChange"));
+       
+        navigate("/dashboard");
+      }
     } catch (err) {
-      alert(err.response?.data?.error || "Registration failed.");
+      console.error("Registration error:", err.response?.data?.error || "Registration failed.");
+      setIsLoading(false);
     }
   };
 
@@ -74,11 +91,9 @@ const Register = () => {
       
       window.dispatchEvent(new Event("userStorageChange"));
       
-      alert(res.data.message);
       navigate("/dashboard");
     } catch (error) {
-      alert("❌ Google login failed.");
-      console.error(error);
+      console.error("Google login failed:", error);
     }
   };
 
@@ -142,6 +157,7 @@ const Register = () => {
                     placeholder="First Name..."
                     className="flex-1 px-3 py-2.5 sm:px-4 sm:py-3 outline-none text-sm text-gray-700 placeholder-gray-400"
                     required
+                    disabled={isLoading}
                   />
                 </div>
 
@@ -153,6 +169,7 @@ const Register = () => {
                     placeholder="Last Name..."
                     className="flex-1 px-3 py-2.5 sm:px-4 sm:py-3 outline-none text-sm text-gray-700 placeholder-gray-400"
                     required
+                    disabled={isLoading}
                   />
                 </div>
               </div>
@@ -169,11 +186,12 @@ const Register = () => {
                   placeholder="Enter your email..."
                   className="flex-1 px-3 py-2.5 sm:px-4 sm:py-3 outline-none text-sm text-gray-700 placeholder-gray-400"
                   required
+                  disabled={isLoading}
                 />
               </div>
 
              
-              <PasswordInput password={password} setPassword={setPassword} />
+              <PasswordInput password={password} setPassword={setPassword} disabled={isLoading} />
 
 
               <div className="text-xs sm:text-sm text-center">
@@ -189,9 +207,12 @@ const Register = () => {
 
               <button
                 type="submit"
-                className="w-full py-2.5 sm:py-3 rounded-lg text-sm sm:text-base text-white font-semibold bg-gradient-to-r from-green-400 to-green-600 shadow-sm hover:shadow-md transform hover:-translate-y-[1px] transition-all duration-200"
+                disabled={isLoading}
+                className={`w-full py-2.5 sm:py-3 rounded-lg text-sm sm:text-base text-white font-semibold bg-gradient-to-r from-green-400 to-green-600 shadow-sm hover:shadow-md transform hover:-translate-y-[1px] transition-all duration-200 ${
+                  isLoading ? 'opacity-70 cursor-not-allowed' : ''
+                }`}
               >
-                Register
+                {isLoading ? 'Registering...' : 'Register'}
               </button>
             </form>
 
@@ -215,6 +236,13 @@ const Register = () => {
           </div>
         
       </main>
+      
+      <EmailVerificationModal
+        isOpen={showVerificationModal}
+        onClose={() => setShowVerificationModal(false)}
+        email={email}
+        userData={userDataForVerification}
+      />
     </div>
   );
 };

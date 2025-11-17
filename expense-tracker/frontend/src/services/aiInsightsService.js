@@ -21,11 +21,12 @@ const getHeaders = () => {
   };
 };
 
-export const getAIInsights = async () => {
+export const getAIInsights = async (budgets = [], currency = 'PHP') => {
   try {
     const response = await fetch(`${API_BASE_URL}/ai-insights`, {
-      method: "GET",
-      headers: getHeaders()
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify({ budgets, currency })
     });
 
     const data = await response.json();

@@ -6,6 +6,7 @@ import authRoutes from "./routes/authRoutes.js";
 import passwordRoutes from "./routes/passwordRoutes.js";
 import transactionRoutes from "./routes/transactionRoutes.js";
 import aiInsightsRoutes from "./routes/aiInsightsRoutes.js";
+import emailRoutes from "./routes/emailRoutes.js";
 import transporter from "./utils/emailService.js";
 const app = express();
 app.use(cors());
@@ -37,6 +38,7 @@ app.use("/users", authRoutes);
 app.use("/users", passwordRoutes);
 app.use("/transactions", transactionRoutes);
 app.use("/ai-insights", aiInsightsRoutes);
+app.use("/email", emailRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

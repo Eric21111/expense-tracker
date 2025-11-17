@@ -5,7 +5,8 @@ import {
   getTransactionById, 
   updateTransaction, 
   deleteTransaction,
-  getTransactionSummary
+  getTransactionSummary,
+  clearDemoTransactions
 } from "../controllers/transactionController.js";
 import { authenticate } from "../middleware/auth.js";
 
@@ -24,5 +25,7 @@ router.post("/", createTransaction);
 router.put("/:id", updateTransaction);
 
 router.delete("/:id", deleteTransaction);
+
+router.delete("/admin/clear-demo", clearDemoTransactions);
 
 export default router;

@@ -25,6 +25,7 @@ const Login = () => {
   const provider = new GoogleAuthProvider();
   const [showPassword, setShowPassword] = useState(false);
   const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     const t = setTimeout(() => setMounted(true), 10);
@@ -33,7 +34,9 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!email || !password) return alert("Please fill out all fields.");
+    if (!email || !password) return;
+
+    setErrorMessage("");
 
     try {
       const res = await axios.post("http://localhost:5000/users/login", {
@@ -56,7 +59,9 @@ const Login = () => {
       setPassword("");
       navigate("/dashboard");
     } catch (error) {
-      alert(error.response?.data?.error || "❌ Invalid credentials.");
+      const message = error.response?.data?.error || "Invalid email or password. Please try again.";
+      setErrorMessage(message);
+      console.error("Login error:", message);
     }
   };
 
@@ -83,11 +88,10 @@ const Login = () => {
 
       window.dispatchEvent(new Event("userStorageChange"));
 
-      alert(res.data.message);
+      
       navigate("/dashboard");
     } catch (error) {
-      alert("❌ Google login failed.");
-      console.error(error);
+      console.error("Google login failed:", error);
     }
   };
 
@@ -160,7 +164,10 @@ const Login = () => {
                   <input
                     type="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      setErrorMessage("");
+                    }}
                     placeholder="Enter your email..."
                     className="flex-1 px-3 py-2.5 sm:px-4 sm:py-3 outline-none text-sm"
                     required
@@ -179,7 +186,10 @@ const Login = () => {
                   <input
                     type={showPassword ? "text" : "password"}
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      setErrorMessage("");
+                    }}
                     placeholder="Enter your password..."
                     className="flex-1 px-3 py-2.5 sm:px-4 sm:py-3 outline-none text-sm pr-10"
                     required
@@ -196,6 +206,11 @@ const Login = () => {
                     )}
                   </button>
                 </div>
+                {errorMessage && (
+                  <p className="mt-2 text-sm text-red-600">
+                    {errorMessage}
+                  </p>
+                )}
               </div>
 
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between text-xs sm:text-sm gap-2 sm:gap-0">

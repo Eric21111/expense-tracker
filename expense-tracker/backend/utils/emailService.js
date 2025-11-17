@@ -15,11 +15,18 @@ export const generateVerificationCode = () => {
 };
 
 
-export const sendVerificationEmail = async (email, code) => {
+export const sendVerificationEmail = async (email, code, type = 'password-reset') => {
+  const isRegistration = type === 'registration';
+  const isPasswordChange = type === 'password-change';
+  
+  let subject = '🔐 Password Reset Verification Code';
+  if (isRegistration) subject = '✉️ Email Verification Code';
+  if (isPasswordChange) subject = '🔒 Password Change Verification Code';
+  
   const mailOptions = {
     from: `"Trackit - Expense Tracker" <${process.env.EMAIL_USER}>`,
     to: email,
-    subject: '🔐 Password Reset Verification Code',
+    subject,
     html: `
       <!DOCTYPE html>
       <html>
@@ -89,14 +96,18 @@ export const sendVerificationEmail = async (email, code) => {
       <body>
         <div class="container">
           <div class="header">
-            <h1>🔐 Password Reset</h1>
+            <h1>${isRegistration ? '✉️ Email Verification' : isPasswordChange ? '🔒 Password Change' : '🔐 Password Reset'}</h1>
           </div>
           <div class="content">
             <p class="message">
-              You requested to reset your password for your Trackit account.
+              ${isRegistration 
+                ? 'Welcome to Trackit! Please verify your email address to complete your registration.'
+                : isPasswordChange 
+                ? 'You requested to change your password for your Trackit account. For security, we need to verify your identity.'
+                : 'You requested to reset your password for your Trackit account.'}
             </p>
             <p class="message">
-              Use the verification code below to complete the password reset process:
+              Use the verification code below to complete the ${isRegistration ? 'registration' : isPasswordChange ? 'password change' : 'password reset'} process:
             </p>
             <div class="code-box">
               <div class="code">${code}</div>
@@ -105,7 +116,7 @@ export const sendVerificationEmail = async (email, code) => {
               This code will expire in <strong>10 minutes</strong>.
             </p>
             <p class="message warning">
-              ⚠️ If you didn't request this, please ignore this email.
+              ⚠️ If you didn't ${isRegistration ? 'create this account' : isPasswordChange ? 'request to change your password' : 'request this'}, please ignore this email.
             </p>
           </div>
           <div class="footer">

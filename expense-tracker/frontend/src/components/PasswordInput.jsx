@@ -86,8 +86,8 @@ const PasswordInput = ({ password, setPassword }) => {
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
       >
-        <div className="flex items-center justify-center bg-green-500 px-4 py-4">
-          <FaLock className="text-white" />
+        <div className="flex items-center justify-center bg-green-500 px-3 sm:px-4 py-3 sm:py-4">
+          <FaLock className="text-white text-sm sm:text-base" />
         </div>
 
         <input
@@ -96,7 +96,7 @@ const PasswordInput = ({ password, setPassword }) => {
           onChange={handleChange}
           onFocus={() => setShowTooltip(true)}
           placeholder="Enter your password..."
-          className="flex-1 px-4 py-3 outline-none text-sm text-gray-700 placeholder-gray-400"
+          className="flex-1 px-3 py-2.5 sm:px-4 sm:py-3 outline-none text-sm text-gray-700 placeholder-gray-400"
           required
           pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$"
         />
@@ -104,9 +104,9 @@ const PasswordInput = ({ password, setPassword }) => {
         <button
           type="button"
           onClick={() => setShowPassword(!showPassword)}
-          className="absolute right-4 text-gray-500 hover:text-green-600 focus:outline-none"
+          className="absolute right-3 sm:right-4 text-gray-500 hover:text-green-600 focus:outline-none"
         >
-          {showPassword ? <FaEyeSlash /> : <FaEye />}
+          {showPassword ? <FaEyeSlash className="text-sm sm:text-base" /> : <FaEye className="text-sm sm:text-base" />}
         </button>
       </div>
 

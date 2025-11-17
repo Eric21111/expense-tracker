@@ -41,6 +41,10 @@ const TransactionSchema = new mongoose.Schema({
   bgGradient: {
     type: String,
     default: ""
+  },
+  budgetId: {
+    type: String,
+    default: null
   }
 }, {
   timestamps: true

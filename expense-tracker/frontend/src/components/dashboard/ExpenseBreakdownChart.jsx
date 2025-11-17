@@ -37,6 +37,7 @@ const ExpenseBreakdownChart = ({ dateRange }) => {
   const [loading, setLoading] = useState(true);
   const [maxValue, setMaxValue] = useState(5000);
 
+  
   useEffect(() => {
     fetchExpenseData();
   }, [dateRange]);

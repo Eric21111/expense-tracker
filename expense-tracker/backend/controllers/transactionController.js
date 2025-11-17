@@ -2,7 +2,7 @@ import Transaction from "../models/Transaction.js";
 
 export const createTransaction = async (req, res) => {
   try {
-    const { type, category, amount, account, date, description, photos, icon, bgGradient } = req.body;
+    const { type, category, amount, account, date, description, photos, icon, bgGradient, budgetId } = req.body;
     const userId = req.userId;
 
     const transaction = new Transaction({
@@ -15,7 +15,8 @@ export const createTransaction = async (req, res) => {
       description,
       photos,
       icon,
-      bgGradient
+      bgGradient,
+      budgetId
     });
 
     await transaction.save();
@@ -46,7 +47,8 @@ export const getTransactions = async (req, res) => {
       if (endDate) filter.date.$lte = new Date(endDate);
     }
 
-    const transactions = await Transaction.find(filter).sort({ date: -1 });
+    const transactions = await Transaction.find(filter)
+      .sort({ date: -1, createdAt: -1, _id: -1 });
     res.status(200).json({ success: true, transactions });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -114,56 +116,97 @@ export const getTransactionSummary = async (req, res) => {
     const userId = req.userId;
     const { startDate, endDate } = req.query;
 
-    const filter = { userId };
-    
-    if (startDate || endDate) {
-      filter.date = {};
-      if (startDate) filter.date.$gte = new Date(startDate);
-      if (endDate) filter.date.$lte = new Date(endDate);
+    let query = { userId };
+    let dateStart = startDate ? new Date(startDate) : null;
+    let dateEnd = endDate ? new Date(endDate) : null;
+
+    if (dateStart && dateEnd) {
+      query.date = {
+        $gte: dateStart,
+        $lte: dateEnd,
+      };
     }
 
-    const transactions = await Transaction.find(filter);
+    const transactions = await Transaction.find(query);
 
-    const summary = {
-      totalIncome: 0,
-      totalExpense: 0,
-      totalBalance: 0,
-      transactionCount: transactions.length,
-      averageDailySpending: 0
-    };
-
-    transactions.forEach(transaction => {
-      if (transaction.type === "income") {
-        summary.totalIncome += transaction.amount;
-      } else {
-        summary.totalExpense += transaction.amount;
-      }
-    });
-
-    summary.totalBalance = summary.totalIncome - summary.totalExpense;
-
-    if (transactions.length > 0) {
-      const dates = transactions.map(t => new Date(t.date));
-      const firstTransactionDate = new Date(Math.min(...dates));
-      firstTransactionDate.setHours(0, 0, 0, 0);
-      
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      let effectiveEnd = today;
-      if (endDate) {
-        const end = new Date(endDate);
-        end.setHours(0, 0, 0, 0);
-        if (end < today) {
-          effectiveEnd = end;
+    const summary = transactions.reduce(
+      (acc, transaction) => {
+        if (transaction.type === "expense") {
+          acc.totalExpense += transaction.amount;
+        } else if (transaction.type === "income") {
+          acc.totalIncome += transaction.amount;
         }
-      }
+        return acc;
+      },
+      { totalExpense: 0, totalIncome: 0 }
+    );
+
+    summary.transactionCount = transactions.length;
+
+    
+    const expenseTransactions = transactions.filter(t => t.type === "expense");
+    
+    if (expenseTransactions.length > 0) {
+      const uniqueDates = new Set();
       
-      const daysDifference = Math.floor((effectiveEnd - firstTransactionDate) / (1000 * 60 * 60 * 24)) + 1;
-      summary.averageDailySpending = daysDifference > 0 ? summary.totalExpense / daysDifference : 0;
+      expenseTransactions.forEach(transaction => {
+        const date = new Date(transaction.date);
+        const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        uniqueDates.add(dateString);
+      });
+      
+      const uniqueDaysWithTransactions = uniqueDates.size;
+      
+      summary.averageDailySpending = uniqueDaysWithTransactions > 0 
+        ? summary.totalExpense / uniqueDaysWithTransactions 
+        : 0;
+      
+      summary.daysCalculated = uniqueDaysWithTransactions;
+      summary.uniqueDates = Array.from(uniqueDates).sort();
+      
+      console.log('Average Daily Spending Calculation:', {
+        totalExpense: summary.totalExpense,
+        uniqueDaysWithTransactions,
+        uniqueDates: Array.from(uniqueDates).sort(),
+        average: summary.averageDailySpending,
+        explanation: `${summary.totalExpense} ÷ ${uniqueDaysWithTransactions} unique days = ${summary.averageDailySpending}`
+      });
+    } else {
+      summary.averageDailySpending = 0;
+      summary.daysCalculated = 0;
+      summary.uniqueDates = [];
     }
+
+    summary.averageDailySpending = Math.round(summary.averageDailySpending * 100) / 100;
 
     res.status(200).json({ success: true, summary });
   } catch (error) {
+    console.error("Error fetching transaction summary:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const clearDemoTransactions = async (req, res) => {
+  try {
+    const result = await Transaction.deleteMany({
+      $or: [
+        { amount: { $in: [2000, 5000, 10000] } },
+        { 
+          $and: [
+            { amount: { $gte: 1000 } },
+            { amount: { $mod: [1000, 0] } }
+          ]
+        }
+      ]
+    });
+
+    res.status(200).json({ 
+      success: true, 
+      message: `Cleared ${result.deletedCount} demo transactions`,
+      deletedCount: result.deletedCount
+    });
+  } catch (error) {
+    console.error("Error clearing demo transactions:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 };

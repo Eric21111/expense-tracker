@@ -1,6 +1,9 @@
-import React, { useState } from "react";
-import { FaTimes, FaPlus } from "react-icons/fa";
+import React, { useState, useEffect } from "react";
+import { FaTimes, FaPlus, FaChevronDown } from "react-icons/fa";
 import { createTransaction } from "../../services/transactionService";
+import { processAndShowAlerts, showSuccessNotification } from "../../services/notificationService";
+import CategorySelectionModal from "./CategorySelectionModal";
+import SuccessModal from "./SuccessModal";
 
 import SalaryIcon from "../../assets/categories/salary.svg";
 import GiftIcon from "../../assets/categories/gift.svg";
@@ -13,28 +16,56 @@ const AddTransactionModal = ({ isOpen, onClose, onTransactionAdded }) => {
   const [formData, setFormData] = useState({
     category: "",
     amount: "",
-    account: "Wallet",
+    account: "",
     date: new Date().toISOString().split("T")[0],
     description: ""
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [accounts, setAccounts] = useState([]);
+  const [userEmail, setUserEmail] = useState("");
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [availableBudgets, setAvailableBudgets] = useState([]);
+  const [selectedBudget, setSelectedBudget] = useState("");
 
   
   const categoryIcons = {
-    
     "Salary": { icon: SalaryIcon, gradient: "linear-gradient(to bottom right, #FFA726, #FF8A00)" },
     "Gift": { icon: GiftIcon, gradient: "linear-gradient(to bottom right, #FF7043, #FF5722)" },
-    
-    
-    "Food": { icon: ShoppingIcon, gradient: "linear-gradient(to bottom right, #FB923C, #EA580C)" }, 
-    "Transportation": { icon: TransportationIcon, gradient: "linear-gradient(to bottom right, #60A5FA, #2563EB)" }, 
+    "Food": { icon: ShoppingIcon, gradient: "linear-gradient(to bottom right, #FB923C, #EA580C)" },
+    "Transportation": { icon: TransportationIcon, gradient: "linear-gradient(to bottom right, #60A5FA, #2563EB)" },
     "Bills": { icon: BillsIcon, gradient: "linear-gradient(to bottom right, #C084FC, #9333EA)" },
     "Entertainment": { icon: ShoppingIcon, gradient: "linear-gradient(to bottom right, #FBBF24, #F59E0B)" },
-    "Shopping": { icon: ShoppingIcon, gradient: "linear-gradient(to bottom right, #EC407A, #E91E63)" }, 
-    "Grocery": { icon: ShoppingIcon, gradient: "linear-gradient(to bottom right, #66BB6A, #4CAF50)" }, 
+    "Shopping": { icon: ShoppingIcon, gradient: "linear-gradient(to bottom right, #EC407A, #E91E63)" },
+    "Grocery": { icon: ShoppingIcon, gradient: "linear-gradient(to bottom right, #66BB6A, #4CAF50)" },
     "Others": { icon: ShoppingIcon, gradient: "linear-gradient(to bottom right, #4ade80, #22c55e)" }, 
   };
+
+  const getAccountIcon = (iconName) => {
+    return iconName;
+  };
+  useEffect(() => {
+    if (isOpen) {
+      const user = JSON.parse(localStorage.getItem('user'));
+      if (user && user.email) {
+        setUserEmail(user.email);
+        const savedAccounts = localStorage.getItem(`accounts_${user.email}`);
+        if (savedAccounts) {
+          try {
+            const parsedAccounts = JSON.parse(savedAccounts);
+            const enabledAccounts = parsedAccounts.filter(acc => acc.enabled);
+            setAccounts(enabledAccounts);
+            if (!formData.account && enabledAccounts.length > 0) {
+              setFormData(prev => ({ ...prev, account: enabledAccounts[0].id.toString() }));
+            }
+          } catch (e) {
+            console.error('Error parsing accounts:', e);
+          }
+        }
+      }
+    }
+  }, [isOpen]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -44,12 +75,57 @@ const AddTransactionModal = ({ isOpen, onClose, onTransactionAdded }) => {
     }));
   };
 
+  const handleCategorySelect = (categoryName) => {
+    setFormData(prev => ({
+      ...prev,
+      category: categoryName
+    }));
+    if (userEmail && categoryName) {
+      const savedBudgets = localStorage.getItem(`budgets_${userEmail}`);
+      if (savedBudgets) {
+        try {
+          const budgets = JSON.parse(savedBudgets);
+          const categoryBudgets = budgets.filter(b => 
+            b.category.toLowerCase() === categoryName.toLowerCase()
+          );
+          setAvailableBudgets(categoryBudgets);
+          if (categoryBudgets.length === 1) {
+            const budget = categoryBudgets[0];
+            setSelectedBudget(budget.groupId || budget.id?.toString());
+          } else {
+            setSelectedBudget("");
+          }
+        } catch (e) {
+          console.error('Error parsing budgets:', e);
+          setAvailableBudgets([]);
+        }
+      } else {
+        setAvailableBudgets([]);
+      }
+    }
+  };
+
+  const handleTypeChange = (newType) => {
+    setType(newType);
+    setFormData(prev => ({
+      ...prev,
+      category: ""
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!formData.category || !formData.amount) {
+    if (!formData.category || !formData.amount || !formData.account) {
       setError("Please fill in all required fields");
       return;
+    }
+    if (type === "Expenses") {
+      const selectedAccount = accounts.find(acc => acc.id.toString() === formData.account);
+      if (selectedAccount && parseFloat(formData.amount) > selectedAccount.balance) {
+        setError(`Insufficient balance. Available: PHP ${selectedAccount.balance.toLocaleString()}`);
+        return;
+      }
     }
 
     try {
@@ -69,27 +145,66 @@ const AddTransactionModal = ({ isOpen, onClose, onTransactionAdded }) => {
         date: formData.date,
         description: formData.description,
         icon: categoryData.icon,
-        bgGradient: categoryData.gradient
+        bgGradient: categoryData.gradient,
+        budgetId: selectedBudget || null
       };
 
       const response = await createTransaction(transactionData);
-      
+      if (response.success && formData.account) {
+        const savedAccounts = localStorage.getItem(`accounts_${userEmail}`);
+        if (savedAccounts) {
+          try {
+            const accounts = JSON.parse(savedAccounts);
+            const updatedAccounts = accounts.map(acc => {
+              if (acc.id.toString() === formData.account) {
+                const amount = parseFloat(formData.amount);
+                if (type === "Expenses") {
+                  return { ...acc, balance: acc.balance - amount };
+                } else {
+                  return { ...acc, balance: acc.balance + amount };
+                }
+              }
+              return acc;
+            });
+            localStorage.setItem(`accounts_${userEmail}`, JSON.stringify(updatedAccounts));
+          } catch (e) {
+            console.error('Error updating account balance:', e);
+          }
+        }
+      }
+        
       if (response.success) {
-      
         setFormData({
           category: "",
           amount: "",
-          account: "Wallet",
+          account: accounts.length > 0 ? accounts[0].id.toString() : "",
           date: new Date().toISOString().split("T")[0],
           description: ""
         });
-        
-    
+        setSelectedBudget("");
+        setAvailableBudgets([]);
+        if (type === 'Expenses') {
+          const storedUser = localStorage.getItem('user');
+          if (storedUser) {
+            try {
+              const user = JSON.parse(storedUser);
+              const userEmail = user.email;
+              if (userEmail) {
+                setTimeout(() => {
+                  processAndShowAlerts(userEmail, true);
+                }, 500);
+              }
+            } catch (e) {
+              console.error('Error parsing user data:', e);
+            }
+          }
+        }
         if (onTransactionAdded) {
           onTransactionAdded();
         }
+        window.dispatchEvent(new Event('transactionAdded'));
         
-        onClose();
+        setShowSuccessModal(true);
       }
     } catch (err) {
       console.error("Error creating transaction:", err);
@@ -133,7 +248,7 @@ const AddTransactionModal = ({ isOpen, onClose, onTransactionAdded }) => {
           <div className="flex justify-center mb-6">
             <div className="flex bg-gray-200 rounded-full p-1">
               <button
-                onClick={() => setType("Expenses")}
+                onClick={() => handleTypeChange("Expenses")}
                 className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${
                   type === "Expenses"
                     ? "bg-white text-black shadow"
@@ -143,7 +258,7 @@ const AddTransactionModal = ({ isOpen, onClose, onTransactionAdded }) => {
                 Expenses
               </button>
               <button
-                onClick={() => setType("Income")}
+                onClick={() => handleTypeChange("Income")}
                 className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${
                   type === "Income"
                     ? "bg-white text-black shadow"
@@ -160,33 +275,18 @@ const AddTransactionModal = ({ isOpen, onClose, onTransactionAdded }) => {
             
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Select Category <span className="text-red-500">*</span>
+                  Select<span className="hidden sm:inline"> Category</span> <span className="text-red-500">*</span>
                 </label>
-                <select 
-                  name="category"
-                  value={formData.category}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                  required
+                <button
+                  type="button"
+                  onClick={() => setShowCategoryModal(true)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 text-left bg-white hover:bg-gray-50 transition-colors flex items-center justify-between"
                 >
-                  <option value="">Select category</option>
-                  {type === "Income" ? (
-                    <>
-                      <option value="Salary">Salary</option>
-                      <option value="Gift">Gift</option>
-                    </>
-                  ) : (
-                    <>
-                      <option value="Food">Food</option>
-                      <option value="Transportation">Transportation</option>
-                      <option value="Bills">Bills</option>
-                      <option value="Entertainment">Entertainment</option>
-                      <option value="Shopping">Shopping</option>
-                      <option value="Grocery">Grocery</option>
-                      <option value="Others">Others</option>
-                    </>
-                  )}
-                </select>
+                  <span className={formData.category ? "text-gray-900" : "text-gray-500"}>
+                    {formData.category || "Select category"}
+                  </span>
+                  <FaChevronDown className="text-gray-400 text-sm" />
+                </button>
               </div>
 
         
@@ -211,6 +311,33 @@ const AddTransactionModal = ({ isOpen, onClose, onTransactionAdded }) => {
               </div>
             </div>
 
+            {type === "Expenses" && availableBudgets.length > 0 && formData.category && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Select Budget {availableBudgets.length > 1 && <span className="text-red-500">*</span>}
+                </label>
+                <select
+                  value={selectedBudget}
+                  onChange={(e) => setSelectedBudget(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
+                  required={availableBudgets.length > 1}
+                >
+                  {availableBudgets.length > 1 && <option value="">Select a budget</option>}
+                  {availableBudgets.map((budget) => {
+                    const displayName = budget.name || budget.category;
+                    const description = budget.description ? ` (${budget.description})` : '';
+                    const budgetAmount = budget.totalBudget || budget.amount;
+                    const amount = budgetAmount ? ` - PHP ${budgetAmount}` : '';
+                    return (
+                      <option key={budget.id || budget.groupId} value={budget.groupId || budget.id?.toString()}>
+                        {displayName}{description}{amount}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-4">
       
               <div>
@@ -224,9 +351,15 @@ const AddTransactionModal = ({ isOpen, onClose, onTransactionAdded }) => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                   required
                 >
-                  <option value="Wallet">Wallet</option>
-                  <option value="Bank Account">Bank Account</option>
-                  <option value="Credit Card">Credit Card</option>
+                  <option value="">Select Account</option>
+                  {accounts.map((account) => {
+                    const IconComponent = getAccountIcon(account.icon);
+                    return (
+                      <option key={account.id} value={account.id.toString()}>
+                        {account.name} (PHP {account.balance.toLocaleString()})
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
 
@@ -259,24 +392,6 @@ const AddTransactionModal = ({ isOpen, onClose, onTransactionAdded }) => {
                 placeholder="Write a note..."
               ></textarea>
             </div>
-
-       
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Photo
-              </label>
-              <div className="grid grid-cols-3 gap-4">
-                {[1, 2, 3].map((i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    className="aspect-square bg-green-100 text-green-500 rounded-lg flex items-center justify-center border-2 border-dashed border-green-300 hover:bg-green-200 transition"
-                  >
-                    <FaPlus size={24} />
-                  </button>
-                ))}
-              </div>
-            </div>
           </form> 
   
 
@@ -305,6 +420,22 @@ const AddTransactionModal = ({ isOpen, onClose, onTransactionAdded }) => {
             </button>
           </div>
         </div>
+        
+        <CategorySelectionModal
+          isOpen={showCategoryModal}
+          onClose={() => setShowCategoryModal(false)}
+          onSelectCategory={handleCategorySelect}
+          transactionType={type}
+        />
+        
+        <SuccessModal
+          isOpen={showSuccessModal}
+          onClose={() => {
+            setShowSuccessModal(false);
+            onClose();
+          }}
+          message="Your transaction has been added."
+        />
       </div>
     </div>
   );

@@ -1,57 +1,249 @@
 import Transaction from "../models/Transaction.js";
 
-const generateFallbackInsights = (totalExpense, totalIncome, categorySpending) => {
+const generateFallbackInsights = (totalExpense, totalIncome, categorySpending, budgets, transactions, currency = 'PHP') => {
   const insights = [];
-  const savingsRate = totalIncome > 0 ? ((totalIncome - totalExpense) / totalIncome) * 100 : 0;
   
-  if (savingsRate > 50) {
-    insights.push({
-      type: "success",
-      title: "Excellent Savings!",
-      message: `You're saving ${savingsRate.toFixed(0)}% of your income. Keep up the great work!`
+  const getCurrencySymbol = (curr) => {
+    const symbols = {
+      'PHP': '₱',
+      'USD': '$',
+      'EUR': '€',
+      'GBP': '£'
+    };
+    return symbols[curr] || curr;
+  };
+  
+  const exchangeRates = {
+    'PHP': 1,
+    'USD': 0.018,
+    'EUR': 0.017,
+    'GBP': 0.014
+  };
+  
+  const convertAmount = (amount, fromCurrency = 'PHP', toCurrency = currency) => {
+    if (fromCurrency === toCurrency) return amount;
+    const rate = exchangeRates[toCurrency] || 1;
+    return amount * rate;
+  };
+  
+  const calculateBudgetSpent = (budgetId, category, isMultiBudget, groupId) => {
+    let spent = 0;
+    
+    if (isMultiBudget && groupId) {
+      const groupSpecificExpenses = transactions.filter(t => 
+        t.type === 'expense' && 
+        t.budgetId && t.budgetId === groupId && 
+        t.category.toLowerCase() === category?.toLowerCase()
+      );
+      const unassignedExpenses = transactions.filter(t => 
+        t.type === 'expense' && 
+        !t.budgetId && 
+        t.category.toLowerCase() === category?.toLowerCase()
+      );
+      spent = groupSpecificExpenses.reduce((sum, t) => sum + t.amount, 0) +
+              unassignedExpenses.reduce((sum, t) => sum + t.amount, 0);
+    } else {
+      const budgetSpecificExpenses = transactions.filter(t => 
+        t.type === 'expense' && 
+        t.budgetId && 
+        (t.budgetId === budgetId?.toString() || t.budgetId === budgetId)
+      );
+      const unassignedExpenses = transactions.filter(t => 
+        t.type === 'expense' && 
+        !t.budgetId && 
+        t.category.toLowerCase() === category?.toLowerCase()
+      );
+      spent = budgetSpecificExpenses.reduce((sum, t) => sum + t.amount, 0) +
+              unassignedExpenses.reduce((sum, t) => sum + t.amount, 0);
+    }
+    
+    return spent;
+  };
+  
+  let totalBudget = 0;
+  let actualTotalSpent = 0;
+  const processedGroups = new Set();
+  
+  budgets.forEach(budget => {
+    if (budget.groupId && !processedGroups.has(budget.groupId)) {
+      const groupBudgets = budgets.filter(b => b.groupId === budget.groupId);
+      const budgetAmount = budget.totalBudget || groupBudgets.reduce((sum, b) => sum + b.amount, 0);
+      totalBudget += budgetAmount;
+      
+      const totalSpent = groupBudgets.reduce((sum, b) => {
+        return sum + calculateBudgetSpent(b.id || b.groupId, b.category, true, b.groupId);
+      }, 0);
+      actualTotalSpent += totalSpent;
+      
+      processedGroups.add(budget.groupId);
+    } else if (!budget.groupId) {
+      totalBudget += budget.amount;
+      const budgetId = budget.id || budget.groupId;
+      const spent = calculateBudgetSpent(budgetId, budget.category, false, null);
+      actualTotalSpent += spent;
+    }
+  });
+  
+  const overallPercentage = totalBudget > 0 ? ((actualTotalSpent / totalBudget) * 100).toFixed(0) : 0;
+  
+  if (budgets.length > 0) {
+    if (overallPercentage > 100) {
+      insights.push({
+        type: "warning",
+        title: "Over Budget!",
+        message: `You've exceeded your total budget by ${(overallPercentage - 100)}%. Review your spending immediately.`
+      });
+    } else if (overallPercentage > 80) {
+      insights.push({
+        type: "warning",
+        title: "Budget Alert",
+        message: `You've used ${overallPercentage}% of your budget. Monitor your remaining expenses carefully.`
+      });
+    } else if (overallPercentage > 0) {
+      insights.push({
+        type: "success",
+        title: "Good Budget Management",
+        message: `You've used ${overallPercentage}% of your budget. Keep tracking your expenses!`
+      });
+    }
+    
+    const processedMultiBudgets = new Set();
+    const overBudgetItems = [];
+    
+    budgets.forEach(budget => {
+      if (budget.groupId && processedMultiBudgets.has(budget.groupId)) {
+        return;
+      }
+      
+      if (budget.groupId) {
+        const groupBudgets = budgets.filter(b => b.groupId === budget.groupId);
+        const totalBudgetAmount = budget.totalBudget || groupBudgets.reduce((sum, b) => sum + b.amount, 0);
+        
+        const totalSpent = groupBudgets.reduce((sum, b) => {
+          return sum + calculateBudgetSpent(b.id || b.groupId, b.category, true, b.groupId);
+        }, 0);
+        
+        if (totalSpent > totalBudgetAmount) {
+          overBudgetItems.push({
+            name: budget.name || 'Multiple Categories',
+            isMulti: true,
+            spent: totalSpent,
+            budget: totalBudgetAmount
+          });
+        }
+        processedMultiBudgets.add(budget.groupId);
+      } else {
+        const budgetId = budget.id || budget.groupId;
+        const spent = calculateBudgetSpent(budgetId, budget.category, false, null);
+        if (spent > budget.amount) {
+          overBudgetItems.push({
+            name: budget.category,
+            isMulti: false,
+            spent: spent,
+            budget: budget.amount
+          });
+        }
+      }
     });
-  } else if (savingsRate > 20) {
-    insights.push({
-      type: "success",
-      title: "Good Progress!",
-      message: `You're saving ${savingsRate.toFixed(0)}% of your income. Try to increase it gradually.`
-    });
-  } else if (savingsRate > 0) {
-    insights.push({
-      type: "warning",
-      title: "Low Savings",
-      message: `Only saving ${savingsRate.toFixed(0)}% of income. Try to reduce non-essential expenses.`
-    });
+    
+    if (overBudgetItems.length > 0) {
+      const item = overBudgetItems[0];
+      const budgetType = item.isMulti ? 'shared budget' : 'budget';
+      const exceededAmount = convertAmount(item.spent - item.budget);
+      insights.push({
+        type: "warning",
+        title: item.isMulti ? "Shared Budget Exceeded" : "Category Over Budget",
+        message: `${item.name} ${budgetType} exceeded by ${getCurrencySymbol(currency)}${exceededAmount.toFixed(0)}. Consider reducing expenses.`
+      });
+    }
   } else {
-    insights.push({
-      type: "warning",
-      title: "Spending Alert",
-      message: "Your expenses exceed your income. Review your budget immediately."
-    });
+    const savingsRate = totalIncome > 0 ? ((totalIncome - totalExpense) / totalIncome) * 100 : 0;
+    
+    if (totalExpense > totalIncome && totalIncome > 0) {
+      insights.push({
+        type: "warning",
+        title: "Spending Alert",
+        message: "Your expenses exceed your income. Consider creating budgets to better manage your finances."
+      });
+    } else if (savingsRate > 0) {
+      insights.push({
+        type: "success",
+        title: "Good Progress!",
+        message: `You're saving ${savingsRate.toFixed(0)}% of your income. Try setting category budgets for better control.`
+      });
+    }
   }
   
-  const categories = Object.entries(categorySpending).sort((a, b) => b[1] - a[1]);
-  if (categories.length > 0) {
-    const [topCategory, topAmount] = categories[0];
-    const percentage = totalExpense > 0 ? ((topAmount / totalExpense) * 100).toFixed(0) : 0;
-    insights.push({
-      type: "info",
-      title: "Top Spending Category",
-      message: `${topCategory} accounts for ${percentage}% of expenses (PHP ${topAmount}). Look for ways to optimize.`
-    });
+  let topSpendingCategory = null;
+  let maxSpending = 0;
+  
+  budgets.forEach(budget => {
+    if (!budget.groupId || !processedGroups.has(budget.groupId)) {
+      const budgetId = budget.id || budget.groupId;
+      const spent = budget.groupId 
+        ? calculateBudgetSpent(budgetId, budget.category, true, budget.groupId)
+        : calculateBudgetSpent(budgetId, budget.category, false, null);
+      
+      if (spent > maxSpending) {
+        maxSpending = spent;
+        topSpendingCategory = {
+          category: budget.category,
+          spent: spent,
+          budget: budget,
+          isMultiBudget: !!budget.groupId
+        };
+      }
+    }
+  });
+  
+  Object.entries(categorySpending).forEach(([category, amount]) => {
+    const hasBudget = budgets.some(b => b.category.toLowerCase() === category.toLowerCase());
+    if (!hasBudget && amount > maxSpending) {
+      maxSpending = amount;
+      topSpendingCategory = {
+        category: category,
+        spent: amount,
+        budget: null,
+        isMultiBudget: false
+      };
+    }
+  });
+  
+  if (topSpendingCategory) {
+    if (topSpendingCategory.budget) {
+      const budgetAmount = topSpendingCategory.isMultiBudget 
+        ? topSpendingCategory.budget.totalBudget 
+        : topSpendingCategory.budget.amount;
+      const percentage = ((topSpendingCategory.spent / budgetAmount) * 100).toFixed(0);
+      const convertedSpent = convertAmount(topSpendingCategory.spent);
+      const convertedBudget = convertAmount(budgetAmount);
+      insights.push({
+        type: "info",
+        title: "Top Spending Category",
+        message: `${topSpendingCategory.category} used ${percentage}% of its budget (${getCurrencySymbol(currency)}${convertedSpent.toFixed(0)} / ${getCurrencySymbol(currency)}${convertedBudget.toFixed(0)}).`
+      });
+    } else {
+      const percentage = totalExpense > 0 ? ((topSpendingCategory.spent / totalExpense) * 100).toFixed(0) : 0;
+      const convertedSpent = convertAmount(topSpendingCategory.spent);
+      insights.push({
+        type: "info",
+        title: "Top Spending Category",
+        message: `${topSpendingCategory.category} accounts for ${percentage}% of expenses (${getCurrencySymbol(currency)}${convertedSpent.toFixed(0)}). Consider setting a budget for this category.`
+      });
+    }
   }
   
-  if (totalExpense > 0) {
+  if (budgets.length === 0 && totalExpense > 0) {
     insights.push({
       type: "info",
-      title: "Budget Tip",
-      message: "Track daily expenses and set category limits to stay on target."
+      title: "Budget Recommendation",
+      message: "Create category budgets to get better insights and control over your spending."
     });
-  } else {
+  } else if (totalExpense === 0) {
     insights.push({
       type: "info",
       title: "Get Started",
-      message: "Start tracking your expenses to receive personalized insights."
+      message: "Start tracking your expenses to receive personalized budget insights."
     });
   }
   
@@ -61,8 +253,21 @@ const generateFallbackInsights = (totalExpense, totalIncome, categorySpending) =
 export const getAIInsights = async (req, res) => {
   try {
     const userId = req.userId;
+    const { budgets, currency = 'PHP' } = req.body;
     
-   
+    const exchangeRates = {
+      'PHP': 1,
+      'USD': 0.018,
+      'EUR': 0.017,
+      'GBP': 0.014
+    };
+    
+    const convertAmount = (amount, toCurrency = currency) => {
+      if (toCurrency === 'PHP') return amount;
+      const rate = exchangeRates[toCurrency] || 1;
+      return amount * rate;
+    };
+    
     const now = new Date();
     const startDate = new Date(now.getFullYear(), now.getMonth(), 1);
     const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
@@ -71,6 +276,14 @@ export const getAIInsights = async (req, res) => {
       userId,
       date: { $gte: startDate, $lte: endDate }
     });
+    
+    if (transactions.length === 0) {
+      return res.status(200).json({ 
+        success: true, 
+        insights: [],
+        noTransactions: true
+      });
+    }
 
   
     const categorySpending = {};
@@ -97,21 +310,135 @@ export const getAIInsights = async (req, res) => {
     }
 
   
-    const categoryBreakdown = Object.entries(categorySpending)
-      .map(([category, amount]) => `${category}: PHP ${amount}`)
-      .join(", ");
+    const calculateBudgetSpent = (budgetId, category, isMultiBudget, groupId, transactions) => {
+      let spent = 0;
+      
+      if (isMultiBudget && groupId) {
+        const groupSpecificExpenses = transactions.filter(t => 
+          t.type === 'expense' && 
+          t.budgetId && t.budgetId === groupId && 
+          t.category.toLowerCase() === category?.toLowerCase()
+        );
+        const unassignedExpenses = transactions.filter(t => 
+          t.type === 'expense' && 
+          !t.budgetId && 
+          t.category.toLowerCase() === category?.toLowerCase()
+        );
+        spent = groupSpecificExpenses.reduce((sum, t) => sum + t.amount, 0) +
+                unassignedExpenses.reduce((sum, t) => sum + t.amount, 0);
+      } else {
+        const budgetSpecificExpenses = transactions.filter(t => 
+          t.type === 'expense' && 
+          t.budgetId && 
+          (t.budgetId === budgetId?.toString() || t.budgetId === budgetId)
+        );
+        const unassignedExpenses = transactions.filter(t => 
+          t.type === 'expense' && 
+          !t.budgetId && 
+          t.category.toLowerCase() === category?.toLowerCase()
+        );
+        spent = budgetSpecificExpenses.reduce((sum, t) => sum + t.amount, 0) +
+                unassignedExpenses.reduce((sum, t) => sum + t.amount, 0);
+      }
+      
+      return spent;
+    };
+    
+    const budgetAnalysis = [];
+    const processedGroups = new Set();
+    let calculatedTotalBudget = 0;
+    
+    budgets?.forEach(budget => {
+      if (budget.groupId && processedGroups.has(budget.groupId)) {
+        return;
+      }
+      
+      if (budget.groupId) {
+        const groupBudgets = budgets.filter(b => b.groupId === budget.groupId);
+        const totalBudgetAmount = budget.totalBudget || groupBudgets.reduce((sum, b) => sum + b.amount, 0);
+        const categories = groupBudgets.map(b => b.category);
+        
+        const totalSpent = groupBudgets.reduce((sum, b) => {
+          return sum + calculateBudgetSpent(b.id || b.groupId, b.category, true, b.groupId, transactions);
+        }, 0);
+        
+        const percentage = totalBudgetAmount > 0 ? ((totalSpent / totalBudgetAmount) * 100).toFixed(1) : '0';
+        
+        const convertedSpent = convertAmount(totalSpent);
+        const convertedBudget = convertAmount(totalBudgetAmount);
+        budgetAnalysis.push(`${budget.name || 'Multiple Categories'} (shared budget for ${categories.join(', ')}): ${currency} ${convertedSpent.toFixed(0)} spent / ${currency} ${convertedBudget.toFixed(0)} budget (${percentage}% used)`);
+        calculatedTotalBudget += totalBudgetAmount;
+        processedGroups.add(budget.groupId);
+      } else {
+        const budgetId = budget.id || budget.groupId;
+        const spent = calculateBudgetSpent(budgetId, budget.category, false, null, transactions);
+        const percentage = budget.amount > 0 ? ((spent / budget.amount) * 100).toFixed(1) : '0';
+        const convertedSpent = convertAmount(spent);
+        const convertedBudget = convertAmount(budget.amount);
+        budgetAnalysis.push(`${budget.category}: ${currency} ${convertedSpent.toFixed(0)} spent / ${currency} ${convertedBudget.toFixed(0)} budget (${percentage}% used)`);
+        calculatedTotalBudget += budget.amount;
+      }
+    });
+    
+    Object.entries(categorySpending).forEach(([category, spent]) => {
+      const hasBudget = budgets?.some(b => b.category.toLowerCase() === category.toLowerCase());
+      if (!hasBudget) {
+        const convertedSpent = convertAmount(spent);
+        budgetAnalysis.push(`${category}: ${currency} ${convertedSpent.toFixed(0)} spent (no budget set)`);
+      }
+    });
+    
+    const categoryAnalysis = budgetAnalysis.join(", ");
+    const totalBudget = calculatedTotalBudget;
+    
+    let actualTotalTrackedSpent = 0;
+    const processedGroupsForTotal = new Set();
+    
+    budgets?.forEach(budget => {
+      if (budget.groupId && !processedGroupsForTotal.has(budget.groupId)) {
+        const groupBudgets = budgets.filter(b => b.groupId === budget.groupId);
+        const totalSpent = groupBudgets.reduce((sum, b) => {
+          return sum + calculateBudgetSpent(b.id || b.groupId, b.category, true, b.groupId, transactions);
+        }, 0);
+        actualTotalTrackedSpent += totalSpent;
+        processedGroupsForTotal.add(budget.groupId);
+      } else if (!budget.groupId) {
+        const budgetId = budget.id || budget.groupId;
+        const spent = calculateBudgetSpent(budgetId, budget.category, false, null, transactions);
+        actualTotalTrackedSpent += spent;
+      }
+    });
+    
+    console.log('AI Insights Calculation:', {
+      actualTotalTrackedSpent,
+      totalBudget,
+      percentage: totalBudget > 0 ? ((actualTotalTrackedSpent / totalBudget) * 100).toFixed(1) : '0'
+    });
 
-    const prompt = `Based on this spending data, give 3 financial suggestions(use only simple words, make it short (1 - 2 sentence) but on point) be mad if you can if the expenses are too high you can act like your giving up if the spent on something is low make a joke for it(e.g 10 pesos for bills what are you paying for?) if the expense is too high suggest what to do (e.g turn off your fan if not using):
+    const convertedTotalSpent = convertAmount(actualTotalTrackedSpent);
+    const convertedTotalBudget = convertAmount(totalBudget);
+    const convertedIncome = convertAmount(totalIncome);
+    
+    const prompt = `Based on this spending analysis with individual and shared budgets, provide financial recommendations and practical tips make it short 2-3 sentence is enough:
 
-Expenses: PHP ${totalExpense}
-Income: PHP ${totalIncome}
-Categories: ${categoryBreakdown || "None"}
+Currency: ${currency}
+Total Budget Spending: ${currency} ${convertedTotalSpent.toFixed(0)}
+Total Budget Limit: ${currency} ${convertedTotalBudget.toFixed(0)}
+${totalIncome > 0 ? `Income: ${currency} ${convertedIncome.toFixed(0)}` : ''}
+Budget Analysis: ${categoryAnalysis || "None"}
 
-Return JSON array:
+Note: Some budgets are "shared budgets" which means multiple categories share a single budget pool.
+
+Focus on budget-specific advice. Provide insights about:
+1. Individual budgets or shared budgets that are over limit or near their limits
+2. Budgets with good performance (under 70% utilization)
+3. Suggestions for better budget allocation, especially for shared budgets
+
+Return JSON array with 2-3 insights. IMPORTANT: Use ${currency} (${currency === 'USD' ? 'dollars' : currency === 'PHP' ? 'pesos' : currency}) as the currency in all responses and recommendations:
 [
-  {"type":"warning","title":"Alert","message":"Short warning"},
-  {"type":"info","title":"Tip","message":"Helpful advice"},
-  {"type":"success","title":"Good","message":"Positive feedback"}
+  {"type":"warning","title":"Budget Alert","message":"Specific warning for over/near budget items"},
+  {"type":"info","title":"Budget Tip","message":"Practical advice for managing individual or shared budgets"},
+  {"type":"success","title":"Good Progress","message":"Positive feedback on budget adherence"}
 ]`;
 
 
@@ -139,7 +466,7 @@ Return JSON array:
         console.warn("Gemini API rate limit reached, returning fallback insights");
         return res.status(200).json({ 
           success: true, 
-          insights: generateFallbackInsights(totalExpense, totalIncome, categorySpending),
+          insights: generateFallbackInsights(totalExpense, totalIncome, categorySpending, budgets, transactions, currency),
           fallback: true
         });
       }
@@ -154,7 +481,7 @@ Return JSON array:
       insights = JSON.parse(jsonText);
     } catch (parseError) {
       console.error("Error parsing AI response:", parseError);
-      insights = generateFallbackInsights(totalExpense, totalIncome, categorySpending);
+      insights = generateFallbackInsights(totalExpense, totalIncome, categorySpending, budgets, transactions, currency);
     }
 
     res.status(200).json({ 
@@ -164,9 +491,11 @@ Return JSON array:
 
   } catch (error) {
     console.error("AI Insights Error:", error);
-    res.status(500).json({ 
-      success: false, 
-      message: error.message 
+    return res.status(200).json({ 
+      success: true, 
+      insights: generateFallbackInsights(totalExpense, totalIncome, categorySpending, budgets, transactions, currency),
+      fallback: true,
+      error: error.message 
     });
   }
 };

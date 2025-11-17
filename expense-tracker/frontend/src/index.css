@@ -9,6 +9,45 @@
     }
   }
 
+/* Global button and clickable element styles */
+button,
+input[type="button"],
+input[type="submit"],
+input[type="reset"] {
+  cursor: pointer;
+}
+
+/* Disabled buttons should show not-allowed cursor */
+button:disabled,
+input[type="button"]:disabled,
+input[type="submit"]:disabled,
+input[type="reset"]:disabled {
+  cursor: not-allowed;
+}
+
+/* Also apply to elements with button role */
+[role="button"] {
+  cursor: pointer;
+}
+
+/* Links styled as buttons */
+a.button, a.btn {
+  cursor: pointer;
+}
+
+/* Clickable elements with specific classes */
+.clickable, .cursor-pointer {
+  cursor: pointer !important;
+}
+
+/* Interactive elements */
+select,
+label[for],
+input[type="checkbox"],
+input[type="radio"] {
+  cursor: pointer;
+}
+
 
 .transition-wrapper {
   transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
@@ -89,5 +128,19 @@
     transform: translateX(100%);
     opacity: 0;
   }
+}
+
+/* Badge shine animation */
+@keyframes shine {
+  0% {
+    transform: translateX(-100%) translateY(-100%) rotate(45deg);
+  }
+  100% {
+    transform: translateX(100%) translateY(100%) rotate(45deg);
+  }
+}
+
+.animate-shine {
+  animation: shine 3s infinite;
 }
   

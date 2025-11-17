@@ -1,12 +1,27 @@
 import React, { useState, useEffect } from "react";
 import { FaExclamationTriangle, FaChartLine, FaBullseye } from "react-icons/fa"; 
 import { IoSparklesOutline } from "react-icons/io5";
-import { getAIInsights } from "../../services/aiInsightsService"; 
+import { getAIInsights } from "../../services/aiInsightsService";
+import { loadBudgetsWithReset } from "../../services/budgetService";
+import { useCurrency } from "../../contexts/CurrencyContext"; 
 
 const AiInsights = () => {
   const [insights, setInsights] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [noTransactions, setNoTransactions] = useState(false);
+  const [userEmail, setUserEmail] = useState('');
+  const { getCurrencyCode } = useCurrency();
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        const user = JSON.parse(storedUser);
+        setUserEmail(user.email || '');
+      } catch (e) {}
+    }
+  }, []);
 
  
   const insightConfig = {
@@ -31,9 +46,21 @@ const AiInsights = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await getAIInsights();
+      setNoTransactions(false);
+      
+      let budgets = [];
+      if (userEmail) {
+        budgets = await loadBudgetsWithReset(userEmail);
+      }
+      const currency = getCurrencyCode();
+      
+      const response = await getAIInsights(budgets, currency);
+      
       if (response.success) {
         setInsights(response.insights);
+        if (response.noTransactions) {
+          setNoTransactions(true);
+        }
       }
     } catch (err) {
       console.error("Error fetching AI insights:", err);
@@ -44,8 +71,10 @@ const AiInsights = () => {
   };
 
   useEffect(() => {
-    fetchInsights();
-  }, []);
+    if (userEmail) {
+      fetchInsights();
+    }
+  }, [userEmail]);
 
   return (
     <div
@@ -74,9 +103,13 @@ const AiInsights = () => {
         <div className="text-center py-8">
           <p className="text-red-600 text-sm">Error: {error}</p>
         </div>
+      ) : noTransactions ? (
+        <div className="text-center py-8">
+          <p className="text-gray-600">No transactions found. Add transactions to get insights!</p>
+        </div>
       ) : insights.length === 0 ? (
         <div className="text-center py-8">
-          <p className="text-gray-600">No insights available yet. Add more transactions!</p>
+          <p className="text-gray-600">No insights available yet.</p>
         </div>
       ) : (
         <div className="space-y-4 mb-6">
