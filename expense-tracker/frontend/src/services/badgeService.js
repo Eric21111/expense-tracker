@@ -1,8 +1,24 @@
-const checkAndSaveBudgetCompletion = (userEmail) => {
-  if (!userEmail) return;
+const checkAndSaveBudgetCompletion = async (userEmail) => {
+  if (!userEmail) return {};
   
   const budgets = JSON.parse(localStorage.getItem(`budgets_${userEmail}`) || '[]');
-  const transactions = JSON.parse(localStorage.getItem(`transactions_${userEmail}`) || '[]');
+  let transactions = [];
+  try {
+    const response = await fetch('http://localhost:5000/transactions', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-email': userEmail
+      }
+    });
+    if (response.ok) {
+      const data = await response.json();
+      transactions = data.transactions || [];
+    }
+  } catch (error) {
+    console.error('Error fetching transactions for completion check:', error);
+  }
+  
   const completions = JSON.parse(localStorage.getItem(`budgetCompletions_${userEmail}`) || '{}');
   const now = new Date();
   const currentMonth = now.getMonth();
@@ -85,17 +101,34 @@ const checkAndSaveBudgetCompletion = (userEmail) => {
   return completions;
 };
 
-export const calculateBadgeProgress = (badge, userEmail) => {
+export const calculateBadgeProgress = async (badge, userEmail) => {
   if (!userEmail) {
     return { current: 0, target: 1, unlocked: false };
   }
 
-  const transactions = JSON.parse(localStorage.getItem(`transactions_${userEmail}`) || '[]');
+  let transactions = [];
+  try {
+    const response = await fetch('http://localhost:5000/transactions', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-email': userEmail
+      }
+    });
+    if (response.ok) {
+      const data = await response.json();
+      transactions = data.transactions || [];
+    }
+  } catch (error) {
+    console.error('Error fetching transactions for badge calculation:', error);
+    transactions = [];
+  }
+  
   const budgets = JSON.parse(localStorage.getItem(`budgets_${userEmail}`) || '[]');
   const archivedBudgets = JSON.parse(localStorage.getItem(`archivedBudgets_${userEmail}`) || '[]');
   const allBudgets = [...budgets, ...archivedBudgets];
   
-  const completions = checkAndSaveBudgetCompletion(userEmail);
+  const completions = await checkAndSaveBudgetCompletion(userEmail);
   
   let current = 0;
   let target = badge.requirement.count;
@@ -132,40 +165,6 @@ export const calculateBadgeProgress = (badge, userEmail) => {
           current = 1;
         }
       }
-      
-      if (current === 0) {
-        const categoryBudgets = budgets.filter(b => 
-          b.category === category || 
-          (b.items && b.items.some(item => item.category === category))
-        );
-        
-        if (categoryBudgets.length > 0) {
-          const now = new Date();
-          const currentMonth = now.getMonth();
-          const currentYear = now.getFullYear();
-          
-          const categoryExpenses = transactions.filter(t => {
-            const tDate = new Date(t.date);
-            return t.type === 'expense' && 
-                   t.category === category &&
-                   tDate.getMonth() === currentMonth &&
-                   tDate.getFullYear() === currentYear;
-          });
-          
-          const totalExpense = categoryExpenses.reduce((sum, t) => sum + (t.amount || 0), 0);
-          const budgetAmount = categoryBudgets.reduce((sum, b) => {
-            if (b.items) {
-              const item = b.items.find(i => i.category === category);
-              return sum + (item?.amount || 0);
-            }
-            return sum + (b.amount || 0);
-          }, 0);
-
-          if (budgetAmount > 0 && totalExpense <= budgetAmount) {
-            current = 1;
-          }
-        }
-      }
       break;
 
     case 'under-budget-month':
@@ -193,30 +192,6 @@ export const calculateBadgeProgress = (badge, userEmail) => {
           }
         }
       }
-      
-      if (current === 0) {
-        const currentMonth = new Date().getMonth();
-        const currentYear = new Date().getFullYear();
-        
-        const monthlyExpenses = transactions.filter(t => {
-          const date = new Date(t.date);
-          return t.type === 'expense' && 
-                 date.getMonth() === currentMonth && 
-                 date.getFullYear() === currentYear;
-        });
-        
-        const totalMonthlyExpense = monthlyExpenses.reduce((sum, t) => sum + (t.amount || 0), 0);
-        const totalBudgetAmount = budgets.reduce((sum, b) => {
-          if (b.items) {
-            return sum + b.items.reduce((itemSum, item) => itemSum + (item.amount || 0), 0);
-          }
-          return sum + (b.amount || 0);
-        }, 0);
-        
-        if (totalBudgetAmount > 0 && totalMonthlyExpense <= totalBudgetAmount) {
-          current = 1;
-        }
-      }
       break;
 
     default:
@@ -237,51 +212,97 @@ export const calculateBadgeProgress = (badge, userEmail) => {
   return { current, target, unlocked };
 };
 
-export const getBadgeStats = (userEmail) => {
+export const getBadgeStats = async (userEmail) => {
   if (!userEmail) {
     return { total: 0, unlocked: 0, inProgress: 0 };
   }
 
-  const badgeProgress = JSON.parse(localStorage.getItem(`badgeProgress_${userEmail}`) || '{}');
-  const unlockedCount = Object.keys(badgeProgress).length;
+  try {
+    const response = await fetch('http://localhost:5000/api/badges/stats', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-email': userEmail
+      }
+    });
 
-  return {
-    total: 19,
-    unlocked: unlockedCount,
-    inProgress: 0
-  };
+    if (response.ok) {
+      const data = await response.json();
+      return data.stats;
+    }
+  } catch (error) {
+    console.error('Error fetching badge stats:', error);
+  }
+
+  return { total: 19, unlocked: 0, inProgress: 0 };
 };
 
-export const checkNewBadges = (userEmail, badgeDefinitions) => {
+export const checkNewBadges = async (userEmail, badgeDefinitions) => {
   if (!userEmail || !badgeDefinitions) return [];
   
-  const shownBadges = JSON.parse(localStorage.getItem(`shownBadges_${userEmail}`) || '[]');
-  
-  const currentProgress = JSON.parse(localStorage.getItem(`badgeProgress_${userEmail}`) || '{}');
+  let shownBadges = [];
+  try {
+    const shownResponse = await fetch('http://localhost:5000/api/badges/shown', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-email': userEmail
+      }
+    });
+    if (shownResponse.ok) {
+      const data = await shownResponse.json();
+      shownBadges = data.shownBadges || [];
+    }
+  } catch (error) {
+    console.error('Error fetching shown badges:', error);
+  }
   
   const newlyUnlocked = [];
   
-  badgeDefinitions.forEach(badge => {
-    const progress = calculateBadgeProgress(badge, userEmail);
-    const isInProgress = !!currentProgress[badge.id];
+  for (const badge of badgeDefinitions) {
+    const progress = await calculateBadgeProgress(badge, userEmail);
     const isShown = shownBadges.includes(badge.id);
     
     if (progress.unlocked && !isShown) {
       newlyUnlocked.push(badge);
+      
+      try {
+        await fetch('http://localhost:5000/api/badges/progress', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-user-email': userEmail
+          },
+          body: JSON.stringify({
+            badgeId: badge.id,
+            name: badge.name,
+            unlocked: true,
+            progress: progress
+          })
+        });
+      } catch (error) {
+        console.error('Error saving badge progress:', error);
+      }
     }
-  });
+  }
   
   return newlyUnlocked;
 };
 
-export const markBadgeAsShown = (userEmail, badgeId) => {
+export const markBadgeAsShown = async (userEmail, badgeId) => {
   if (!userEmail || !badgeId) return;
   
-  const shownBadges = JSON.parse(localStorage.getItem(`shownBadges_${userEmail}`) || '[]');
-  
-  if (!shownBadges.includes(badgeId)) {
-    shownBadges.push(badgeId);
-    localStorage.setItem(`shownBadges_${userEmail}`, JSON.stringify(shownBadges));
+  try {
+    await fetch('http://localhost:5000/api/badges/mark-shown', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-email': userEmail
+      },
+      body: JSON.stringify({ badgeId })
+    });
+  } catch (error) {
+    console.error('Error marking badge as shown:', error);
   }
 };
 
@@ -293,10 +314,35 @@ export const clearUserBadgeData = (userEmail) => {
   localStorage.removeItem(`shownBadges_${userEmail}`);
 };
 
-export const getAllBadgeProgress = (userEmail) => {
+export const getAllBadgeProgress = async (userEmail) => {
   if (!userEmail) return {};
   
-  return JSON.parse(localStorage.getItem(`badgeProgress_${userEmail}`) || '{}');
+  try {
+    const response = await fetch('http://localhost:5000/api/badges', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-email': userEmail
+      }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const badgeProgress = {};
+      (data.badges || []).forEach(badge => {
+        badgeProgress[badge.badgeId] = {
+          unlocked: badge.unlocked,
+          unlockedAt: badge.unlockedAt,
+          progress: badge.progress
+        };
+      });
+      return badgeProgress;
+    }
+  } catch (error) {
+    console.error('Error fetching badge progress:', error);
+  }
+  
+  return {};
 };
 
 export const checkBudgetCompletions = checkAndSaveBudgetCompletion;

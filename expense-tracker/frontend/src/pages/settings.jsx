@@ -66,6 +66,11 @@ const Settings = () => {
   const [newUsername, setNewUsername] = useState("");
   const [isSavingUsername, setIsSavingUsername] = useState(false);
   const [showUsernameSuccessModal, setShowUsernameSuccessModal] = useState(false);
+  const [isEditingPhoto, setIsEditingPhoto] = useState(false);
+  const [selectedPhoto, setSelectedPhoto] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState("");
+  const [isSavingPhoto, setIsSavingPhoto] = useState(false);
+  const [showPhotoSuccessModal, setShowPhotoSuccessModal] = useState(false);
   const navigate = useNavigate();
   const { isExpanded, setIsMobileMenuOpen } = useSidebar();
   const { currency, updateCurrency } = useCurrency();
@@ -79,7 +84,7 @@ const Settings = () => {
           fullName: user.name || user.fullName || user.displayName || user.username || "User",
           email: user.email || "",
           photoURL: user.photoURL || "",
-          role: user.role || "Administrator"
+          role: user.role || "User"
         });
         
         setFormData(prev => ({
@@ -144,7 +149,7 @@ const Settings = () => {
         if (storedUser) {
           try {
             const userData = JSON.parse(storedUser);
-            setIsGoogleUser(!!userData.photoURL);
+            setIsGoogleUser(userData.provider === 'google');
           } catch (e) {
             setIsGoogleUser(false);
           }
@@ -499,6 +504,81 @@ const Settings = () => {
     setNewUsername("");
   };
 
+  const handleEditPhoto = () => {
+    setIsEditingPhoto(true);
+  };
+
+  const handlePhotoFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert("Photo size must be less than 5MB");
+        return;
+      }
+      
+      if (!file.type.startsWith('image/')) {
+        alert("Please select a valid image file");
+        return;
+      }
+      
+      setSelectedPhoto(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSavePhoto = async () => {
+    if (!selectedPhoto) {
+      alert("Please select a photo first");
+      return;
+    }
+
+    setIsSavingPhoto(true);
+    try {
+      const storedUser = localStorage.getItem("user");
+      const user = JSON.parse(storedUser);
+      
+      const formData = new FormData();
+      formData.append('email', user.email);
+      formData.append('photo', selectedPhoto);
+      
+      const res = await axios.post("http://localhost:5000/users/update-photo", formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      const updatedUser = { ...user, photoURL: res.data.photoURL };
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      
+      setUserData(prev => ({
+        ...prev,
+        photoURL: res.data.photoURL
+      }));
+
+      setIsEditingPhoto(false);
+      setSelectedPhoto(null);
+      setPhotoPreview("");
+      setShowPhotoSuccessModal(true);
+      
+      window.dispatchEvent(new Event("userStorageChange"));
+    } catch (error) {
+      console.error("Error updating photo:", error);
+      alert("Failed to update photo. Please try again.");
+    } finally {
+      setIsSavingPhoto(false);
+    }
+  };
+
+  const handleCancelEditPhoto = () => {
+    setIsEditingPhoto(false);
+    setSelectedPhoto(null);
+    setPhotoPreview("");
+  };
+
   const handleDashboardViewChange = (view) => {
     const prevView = dashboardView;
     if (prevView !== view) {
@@ -534,7 +614,13 @@ const Settings = () => {
           <div className="bg-white rounded-2xl p-4 sm:p-6 lg:p-8 shadow-sm mb-6 sm:mb-8">
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 lg:gap-8">
               <div className="relative flex-shrink-0">
-                {userData.photoURL ? (
+                {(isEditingPhoto && photoPreview) ? (
+                  <img 
+                    src={photoPreview} 
+                    alt="Preview" 
+                    className="w-24 h-24 sm:w-28 sm:h-28 lg:w-32 lg:h-32 rounded-full object-cover border-4 border-green-500"
+                  />
+                ) : userData.photoURL ? (
                   <img 
                     src={userData.photoURL} 
                     alt="Profile" 
@@ -544,6 +630,20 @@ const Settings = () => {
                   <div className="w-24 h-24 sm:w-28 sm:h-28 lg:w-32 lg:h-32 rounded-full bg-green-500 flex items-center justify-center text-white font-bold text-3xl sm:text-4xl">
                     {(isEditingUsername && newUsername) ? newUsername.charAt(0).toUpperCase() : userData.fullName ? userData.fullName.charAt(0).toUpperCase() : 'U'}
                   </div>
+                )}
+                {isEditingPhoto && (
+                  <label className="absolute bottom-0 right-0 bg-green-600 hover:bg-green-700 text-white rounded-full p-2 cursor-pointer shadow-lg transition-colors">
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={handlePhotoFileChange}
+                      className="hidden"
+                    />
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </label>
                 )}
               </div>
               <div className="flex-1 w-full text-center sm:text-left">
@@ -583,12 +683,51 @@ const Settings = () => {
                     </button>
                   </div>
                 ) : (
-                  <button 
-                    onClick={handleEditUsername}
-                    className="bg-green-600 hover:bg-green-700 text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg text-sm sm:text-base font-medium transition-colors w-full sm:w-auto"
-                  >
-                    Change
-                  </button>
+                  <div className="flex gap-2 justify-center sm:justify-start">
+                      <button 
+                        onClick={handleEditUsername}
+                        disabled={isGoogleUser}
+                        className={`px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg text-sm sm:text-base font-medium transition-colors ${
+                          isGoogleUser 
+                            ? 'bg-gray-400 cursor-not-allowed opacity-60' 
+                            : 'bg-green-600 hover:bg-green-700'
+                        } text-white`}
+                        title={isGoogleUser ? "Google account users must change name via Google Account settings" : ""}
+                      >
+                        Change Name
+                      </button>
+                    {isEditingPhoto ? (
+                      <>
+                        <button 
+                          onClick={handleSavePhoto}
+                          disabled={isSavingPhoto || !selectedPhoto}
+                          className="bg-blue-600 hover:bg-blue-700 text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg text-sm sm:text-base font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {isSavingPhoto ? "Saving..." : "Save Photo"}
+                        </button>
+                        <button 
+                          onClick={handleCancelEditPhoto}
+                          disabled={isSavingPhoto}
+                          className="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg text-sm sm:text-base font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <button 
+                        onClick={handleEditPhoto}
+                        disabled={isGoogleUser}
+                        className={`px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg text-sm sm:text-base font-medium transition-colors ${
+                          isGoogleUser 
+                            ? 'bg-gray-400 cursor-not-allowed opacity-60' 
+                            : 'bg-blue-600 hover:bg-blue-700'
+                        } text-white`}
+                        title={isGoogleUser ? "Google account users must change photo via Google Account settings" : ""}
+                      >
+                        Change Photo
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
@@ -964,6 +1103,11 @@ const Settings = () => {
         isOpen={showUsernameSuccessModal}
         message="Username updated successfully!"
         onClose={() => setShowUsernameSuccessModal(false)}
+      />
+      <SuccessModal
+        isOpen={showPhotoSuccessModal}
+        message="Profile photo updated successfully! Your new photo is now visible."
+        onClose={() => setShowPhotoSuccessModal(false)}
       />
     </div>
   );

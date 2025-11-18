@@ -189,12 +189,12 @@ export const BadgeProvider = ({ children }) => {
     return () => window.removeEventListener('userStorageChange', handleUserChange);
   }, []);
 
-  const checkForNewBadges = useCallback(() => {
+  const checkForNewBadges = useCallback(async () => {
     if (!userEmail) return;
 
-    checkBudgetCompletions(userEmail);
+    await checkBudgetCompletions(userEmail);
 
-    const newBadges = checkNewBadges(userEmail, badgeDefinitions);
+    const newBadges = await checkNewBadges(userEmail, badgeDefinitions);
     
     if (newBadges.length > 0) {
       setBadgeQueue(prev => [...prev, ...newBadges]);
@@ -208,7 +208,9 @@ export const BadgeProvider = ({ children }) => {
       setBadgeQueue(prev => prev.slice(1));
       
       if (userEmail && nextBadge.id) {
-        markBadgeAsShown(userEmail, nextBadge.id);
+        markBadgeAsShown(userEmail, nextBadge.id).catch(err => 
+          console.error('Error marking badge as shown:', err)
+        );
         window.dispatchEvent(new Event('badgeUnlocked'));
       }
     }

@@ -5,6 +5,7 @@ import { SidebarProvider } from "./contexts/SidebarContext";
 import { CurrencyProvider } from "./contexts/CurrencyContext";
 import { BadgeProvider } from "./contexts/BadgeContext";
 import AuthWrapper from "./components/auth/AuthWrapper";
+import './utils/fixIncomeBadge';
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/register";
 import Home from "./pages/Home"

@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import User from "../models/User.js";
 import Transaction from "../models/Transaction.js";
+import Badge from "../models/Badge.js";
 import VerificationCode from "../models/VerificationCode.js";
 import PendingRegistration from "../models/PendingRegistration.js";
 import { generateVerificationCode, sendVerificationEmail } from "../utils/emailService.js";
@@ -81,6 +82,8 @@ export const login = async (req, res) => {
       user: { 
         email: user.email,
         name: user.name,
+        photoURL: user.photoURL,
+        role: user.role || 'User',
         _id: user._id,
         provider: user.provider || 'local'
       } 
@@ -99,16 +102,53 @@ export const googleAuth = async (req, res) => {
   if (!user) {
     user = new User({ 
       name, 
-      email, 
+      email,
+      photoURL,
+      role: "User",
       provider: "google",
       isVerified: true
     });
+    await user.save();
+  } else if (photoURL && user.photoURL !== photoURL) {
+    user.photoURL = photoURL;
     await user.save();
   }
   
   res.status(200).json({ message: "✅ Google login successful", user });
 };
 
+
+export const updatePhoto = async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ error: "Email is required." });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ error: "No photo file provided." });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    const photoURL = `${req.protocol}://${req.get('host')}/uploads/profiles/${req.file.filename}`;
+    
+    user.photoURL = photoURL;
+    await user.save();
+
+    res.status(200).json({
+      message: "✅ Photo updated successfully",
+      photoURL: photoURL
+    });
+  } catch (error) {
+    console.error("Update photo error:", error);
+    res.status(500).json({ error: "Failed to update photo." });
+  }
+};
 
 export const deleteAccount = async (req, res) => {
   const { email } = req.body;
@@ -125,11 +165,15 @@ export const deleteAccount = async (req, res) => {
     const deletedTransactions = await Transaction.deleteMany({ userId: user._id });
     console.log(`Deleted ${deletedTransactions.deletedCount} transactions for user ${email}`);
 
+    const deletedBadges = await Badge.deleteMany({ userEmail: email });
+    console.log(`Deleted ${deletedBadges.deletedCount} badges for user ${email}`);
+
     await User.deleteOne({ email });
 
     res.status(200).json({ 
       message: "✅ Account and all associated data deleted successfully",
-      deletedTransactions: deletedTransactions.deletedCount
+      deletedTransactions: deletedTransactions.deletedCount,
+      deletedBadges: deletedBadges.deletedCount
     });
   } catch (err) {
     console.error("Delete account error:", err);

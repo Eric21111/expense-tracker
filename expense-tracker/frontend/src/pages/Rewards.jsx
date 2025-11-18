@@ -4,7 +4,7 @@ import Header2 from "../components/shared/Header2";
 import { useSidebar } from '../contexts/SidebarContext';
 import { FaTrophy, FaMedal } from "react-icons/fa";
 import BadgeCard from "../components/rewards/BadgeCard";
-import { calculateBadgeProgress, checkBudgetCompletions } from "../services/badgeService";
+import { calculateBadgeProgress, checkBudgetCompletions, getAllBadgeProgress } from "../services/badgeService";
 
 import StarterSaverIcon from "../assets/badges icon/starter saver.svg";
 import ThriftyHeroIcon from "../assets/badges icon/thrifty hero.svg";
@@ -188,7 +188,7 @@ const Rewards = () => {
     }
   ];
 
-  const loadBadges = () => {
+  const loadBadges = async () => {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
     const email = user.email;
     
@@ -203,12 +203,12 @@ const Rewards = () => {
     
     setUserEmail(email);
 
-    checkBudgetCompletions(email);
+    await checkBudgetCompletions(email);
 
-    const badgeProgress = JSON.parse(localStorage.getItem(`badgeProgress_${email}`) || '{}');
+    const badgeProgress = await getAllBadgeProgress(email);
 
-    const badgesWithProgress = badgeDefinitions.map(badge => {
-      const progress = calculateBadgeProgress(badge, email);
+    const badgesWithProgressPromises = badgeDefinitions.map(async badge => {
+      const progress = await calculateBadgeProgress(badge, email);
       const unlockedData = badgeProgress[badge.id];
       
       return {
@@ -217,6 +217,8 @@ const Rewards = () => {
         unlockedAt: unlockedData?.unlockedAt || null
       };
     });
+
+    const badgesWithProgress = await Promise.all(badgesWithProgressPromises);
 
     setBadges(badgesWithProgress);
     setLoading(false);

@@ -14,6 +14,11 @@ export const clearAllUserData = (userEmail) => {
     `currencySettings_${userEmail}`,
     `accounts_${userEmail}`,
     `transferHistory_${userEmail}`,
+    `badgeProgress_${userEmail}`,
+    `shownBadges_${userEmail}`,
+    `budgetCompletions_${userEmail}`,
+    `archivedBudgets_${userEmail}`,
+    `budgetAlerts_${userEmail}`,
   ];
   
   userDataKeys.forEach(key => {

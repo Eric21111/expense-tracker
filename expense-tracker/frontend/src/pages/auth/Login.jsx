@@ -83,6 +83,7 @@ const Login = () => {
           email: user.email,
           photoURL: user.photoURL,
           displayName: user.displayName,
+          provider: 'google'
         })
       );
 

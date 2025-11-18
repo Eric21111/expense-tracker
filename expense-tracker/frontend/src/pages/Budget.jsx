@@ -268,13 +268,13 @@ const Budget = () => {
     fetchAIInsights();
   }, [budgets, transactions, userEmail]);
 
-  const loadBudgets = () => {
+  const loadBudgets = async () => {
     if (!userEmail) return;
     
     const budgetsWithReset = loadBudgetsWithReset(userEmail);
     setBudgets(budgetsWithReset);
     
-    checkBudgetCompletions(userEmail);
+    await checkBudgetCompletions(userEmail);
     
     const notification = getResetNotification(userEmail);
     if (notification) {

@@ -1,6 +1,8 @@
 import React from "react";
 
 const WelcomeBanner = ({ username, illustration }) => {
+  const firstName = username ? username.split(' ')[0] : 'User';
+
   return (
     <div
       className="p-6 md:p-8 flex items-center justify-between shadow-lg h-[180px] relative"
@@ -11,7 +13,7 @@ const WelcomeBanner = ({ username, illustration }) => {
     >
       <div className="text-white z-10 flex-1">
         <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-2">
-          Welcome Back, {username}
+          Welcome Back, {firstName}
         </h1>
         <p className="text-white/90 text-sm md:text-base lg:text-lg">
           Here's your financial overview for today.

@@ -15,6 +15,7 @@ const TransactionListCard = ({ refreshTrigger, onDateFilterChange }) => {
   const [activeTab, setActiveTab] = useState("All");
   const [activePeriod, setActivePeriod] = useState("Month");
   const [transactions, setTransactions] = useState([]);
+  const [allTransactions, setAllTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [budgets, setBudgets] = useState([]);
@@ -31,6 +32,120 @@ const TransactionListCard = ({ refreshTrigger, onDateFilterChange }) => {
     "Others": { icon: ShoppingIcon, gradient: "linear-gradient(to bottom right, #4ade80, #22c55e)", color: "#4ade80" },
   };
 
+  const formatDate = (date) => {
+    switch (activePeriod) {
+      case 'Day':
+        return date.toLocaleDateString('en-US', { 
+          weekday: 'long',
+          month: 'long', 
+          day: 'numeric',
+          year: 'numeric' 
+        });
+      case 'Week':
+        const startOfWeek = new Date(date);
+        startOfWeek.setDate(date.getDate() - date.getDay());
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
+        return `${startOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+      case 'Month':
+        return date.toLocaleDateString('en-US', { 
+          month: 'long', 
+          year: 'numeric' 
+        });
+      case 'Year':
+        return date.getFullYear().toString();
+      case 'Period':
+        return 'All Time';
+      default:
+        return date.toLocaleDateString('en-US', { 
+          month: 'long', 
+          year: 'numeric' 
+        });
+    }
+  };
+
+  const getDateRange = () => {
+    const start = new Date(currentDate);
+    const end = new Date(currentDate);
+    
+    switch (activePeriod) {
+      case 'Day':
+        start.setHours(0, 0, 0, 0);
+        end.setHours(23, 59, 59, 999);
+        break;
+      case 'Week':
+        const dayOfWeek = start.getDay();
+        start.setDate(start.getDate() - dayOfWeek);
+        start.setHours(0, 0, 0, 0);
+        end.setDate(start.getDate() + 6);
+        end.setHours(23, 59, 59, 999);
+        break;
+      case 'Month':
+        start.setDate(1);
+        start.setHours(0, 0, 0, 0);
+        end.setMonth(end.getMonth() + 1, 0);
+        end.setHours(23, 59, 59, 999);
+        break;
+      case 'Year':
+        start.setMonth(0, 1);
+        start.setHours(0, 0, 0, 0);
+        end.setMonth(11, 31);
+        end.setHours(23, 59, 59, 999);
+        break;
+      case 'Period':
+        return { start: null, end: null };
+      default:
+        start.setDate(1);
+        start.setHours(0, 0, 0, 0);
+        end.setMonth(end.getMonth() + 1, 0);
+        end.setHours(23, 59, 59, 999);
+    }
+    
+    return { start, end };
+  };
+
+  const handlePreviousPeriod = () => {
+    const newDate = new Date(currentDate);
+    switch (activePeriod) {
+      case 'Day':
+        newDate.setDate(newDate.getDate() - 1);
+        break;
+      case 'Week':
+        newDate.setDate(newDate.getDate() - 7);
+        break;
+      case 'Month':
+        newDate.setMonth(newDate.getMonth() - 1);
+        break;
+      case 'Year':
+        newDate.setFullYear(newDate.getFullYear() - 1);
+        break;
+      default:
+        newDate.setMonth(newDate.getMonth() - 1);
+    }
+    setCurrentDate(newDate);
+  };
+
+  const handleNextPeriod = () => {
+    const newDate = new Date(currentDate);
+    switch (activePeriod) {
+      case 'Day':
+        newDate.setDate(newDate.getDate() + 1);
+        break;
+      case 'Week':
+        newDate.setDate(newDate.getDate() + 7);
+        break;
+      case 'Month':
+        newDate.setMonth(newDate.getMonth() + 1);
+        break;
+      case 'Year':
+        newDate.setFullYear(newDate.getFullYear() + 1);
+        break;
+      default:
+        newDate.setMonth(newDate.getMonth() + 1);
+    }
+    setCurrentDate(newDate);
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -42,16 +157,8 @@ const TransactionListCard = ({ refreshTrigger, onDateFilterChange }) => {
           const loadedBudgets = await loadBudgetsWithReset(userEmail);
           setBudgets(loadedBudgets || []);
         }
-        const now = new Date();
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
         
-        const filters = {
-          startDate: startOfMonth.toISOString(),
-          endDate: endOfMonth.toISOString()
-        };
-        
-        const response = await getTransactions(filters);
+        const response = await getTransactions({});
         if (response.success) {
           const sortedTransactions = (response.transactions || []).sort((a, b) => {
             const dateA = new Date(a.date);
@@ -68,15 +175,11 @@ const TransactionListCard = ({ refreshTrigger, onDateFilterChange }) => {
             
             return dateDiff;
           });
-          setTransactions(sortedTransactions);
-        }
-        
-        if (onDateFilterChange) {
-          onDateFilterChange(filters);
+          setAllTransactions(sortedTransactions);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
-        setTransactions([]);
+        setAllTransactions([]);
       } finally {
         setLoading(false);
       }
@@ -84,6 +187,27 @@ const TransactionListCard = ({ refreshTrigger, onDateFilterChange }) => {
 
     fetchData();
   }, [refreshTrigger]);
+
+  useEffect(() => {
+    const dateRange = getDateRange();
+    let filtered = allTransactions;
+    
+    if (dateRange.start && dateRange.end) {
+      filtered = allTransactions.filter(transaction => {
+        const transactionDate = new Date(transaction.date);
+        return transactionDate >= dateRange.start && transactionDate <= dateRange.end;
+      });
+    }
+    
+    setTransactions(filtered);
+    
+    if (onDateFilterChange && dateRange.start && dateRange.end) {
+      onDateFilterChange({
+        startDate: dateRange.start.toISOString(),
+        endDate: dateRange.end.toISOString()
+      });
+    }
+  }, [currentDate, activePeriod, allTransactions, onDateFilterChange]);
 
   
   const filteredTransactions = useMemo(() => {
@@ -208,7 +332,10 @@ const TransactionListCard = ({ refreshTrigger, onDateFilterChange }) => {
           {["Day", "Week", "Month", "Year", "Period"].map((period) => (
             <button
               key={period}
-              onClick={() => setActivePeriod(period)}
+              onClick={() => {
+                setActivePeriod(period);
+                setCurrentDate(new Date());
+              }}
               className={`px-2 sm:px-3 py-1 text-xs sm:text-sm font-medium transition-colors duration-200 whitespace-nowrap ${
                 activePeriod === period
                   ? "text-black border-b-2 border-green-500"
@@ -222,13 +349,29 @@ const TransactionListCard = ({ refreshTrigger, onDateFilterChange }) => {
 
    
         <div className="flex items-center justify-center gap-2 sm:gap-6 mb-3 sm:mb-4">
-          <button className="p-1.5 sm:p-2 rounded-full hover:bg-gray-100 text-gray-600">
+          <button 
+            onClick={handlePreviousPeriod}
+            disabled={activePeriod === 'Period'}
+            className={`p-1.5 sm:p-2 rounded-full transition-colors ${
+              activePeriod === 'Period' 
+                ? 'text-gray-300 cursor-not-allowed' 
+                : 'hover:bg-gray-100 text-gray-600 cursor-pointer'
+            }`}
+          >
             <FaChevronLeft className="text-sm sm:text-base" />
           </button>
           <span className="text-sm sm:text-lg font-semibold text-gray-800">
-            November, 2025
+            {formatDate(currentDate)}
           </span>
-          <button className="p-1.5 sm:p-2 rounded-full hover:bg-gray-100 text-gray-600">
+          <button 
+            onClick={handleNextPeriod}
+            disabled={activePeriod === 'Period'}
+            className={`p-1.5 sm:p-2 rounded-full transition-colors ${
+              activePeriod === 'Period' 
+                ? 'text-gray-300 cursor-not-allowed' 
+                : 'hover:bg-gray-100 text-gray-600 cursor-pointer'
+            }`}
+          >
             <FaChevronRight className="text-sm sm:text-base" />
           </button>
         </div>

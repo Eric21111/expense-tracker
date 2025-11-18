@@ -7,6 +7,8 @@ import { useSidebar } from "../../contexts/SidebarContext";
 
 const Header2 = ({ username, title }) => {
   const [userEmail, setUserEmail] = useState("");
+  const [profilePhoto, setProfilePhoto] = useState("");
+  const [photoError, setPhotoError] = useState(false);
   const { setIsMobileMenuOpen } = useSidebar();
 
   useEffect(() => {
@@ -15,6 +17,7 @@ const Header2 = ({ username, title }) => {
       try {
         const user = JSON.parse(storedUser);
         setUserEmail(user.email || '');
+        setProfilePhoto(user.photoURL || user.profilePhoto || user.picture || '');
       } catch (e) {
         console.error('Error parsing user data:', e);
       }
@@ -60,7 +63,16 @@ const Header2 = ({ username, title }) => {
           style={{ borderRadius: "30px" }}
         >
           <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-300 flex items-center justify-center flex-shrink-0 overflow-hidden">
-            <FaUser className="text-gray-600 text-sm sm:text-base" />
+            {profilePhoto && !photoError ? (
+              <img 
+                src={profilePhoto} 
+                alt={username || 'Profile'}
+                className="w-full h-full object-cover"
+                onError={() => setPhotoError(true)}
+              />
+            ) : (
+              <FaUser className="text-gray-600 text-sm sm:text-base" />
+            )}
           </div>
           <div className="hidden sm:flex flex-col items-start flex-1">
             <span className="text-sm font-bold text-gray-800 leading-tight">

@@ -125,7 +125,7 @@ const AchievementsCard = () => {
   };
 
   useEffect(() => {
-    const loadRecentBadge = () => {
+    const loadRecentBadge = async () => {
       const user = JSON.parse(localStorage.getItem("user") || "{}");
       const email = user.email;
 
@@ -134,9 +134,12 @@ const AchievementsCard = () => {
         return;
       }
 
-      const badgeProgress = getAllBadgeProgress(email);
+      const badgeProgress = await getAllBadgeProgress(email);
+      console.log('Achievement Card - Badge Progress:', badgeProgress);
       
       if (!badgeProgress || Object.keys(badgeProgress).length === 0) {
+        console.log('Achievement Card - No badges found');
+        setRecentBadge(null);
         setLoading(false);
         return;
       }
@@ -145,14 +148,16 @@ const AchievementsCard = () => {
       let mostRecentDate = null;
 
       Object.entries(badgeProgress).forEach(([badgeId, data]) => {
-        const unlockedDate = new Date(data.unlockedAt);
-        if (!mostRecentDate || unlockedDate > mostRecentDate) {
-          mostRecentDate = unlockedDate;
-          mostRecent = {
-            id: badgeId,
-            ...badgeDefinitions[badgeId],
-            unlockedAt: data.unlockedAt
-          };
+        if (data.unlocked && data.unlockedAt) {
+          const unlockedDate = new Date(data.unlockedAt);
+          if (!mostRecentDate || unlockedDate > mostRecentDate) {
+            mostRecentDate = unlockedDate;
+            mostRecent = {
+              id: badgeId,
+              ...badgeDefinitions[badgeId],
+              unlockedAt: data.unlockedAt
+            };
+          }
         }
       });
 

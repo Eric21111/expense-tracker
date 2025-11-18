@@ -1,16 +1,25 @@
 import 'dotenv/config';
 import express from "express";
 import cors from "cors";
+import path from "path";
+import { fileURLToPath } from "url";
 import connectDB from "./config/database.js";
 import authRoutes from "./routes/authRoutes.js";
 import passwordRoutes from "./routes/passwordRoutes.js";
 import transactionRoutes from "./routes/transactionRoutes.js";
 import aiInsightsRoutes from "./routes/aiInsightsRoutes.js";
 import emailRoutes from "./routes/emailRoutes.js";
+import badgeRoutes from "./routes/badgeRoutes.js";
 import transporter from "./utils/emailService.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 connectDB();
 
@@ -39,6 +48,7 @@ app.use("/users", passwordRoutes);
 app.use("/transactions", transactionRoutes);
 app.use("/ai-insights", aiInsightsRoutes);
 app.use("/email", emailRoutes);
+app.use("/api", badgeRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
