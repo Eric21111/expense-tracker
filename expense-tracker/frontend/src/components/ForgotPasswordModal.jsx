@@ -24,14 +24,13 @@ const ForgotPasswordModal = ({ isOpen, onClose }) => {
     setMessage("");
 
     try {
-      const res = await axios.post("http://localhost:5000/users/forgot-password", {
+      const res = await axios.post("http:
         email,
       });
       setMessage(res.data.message || "Verification code sent to your email!");
       setMessageType("success");
       setSentEmail(email);
-      
-   
+
       setTimeout(() => {
         setShowVerifyModal(true);
       }, 1000);
@@ -101,12 +100,10 @@ const ForgotPasswordModal = ({ isOpen, onClose }) => {
             />
           </div>
 
-          
           <h2 className="text-3xl font-bold text-gray-900 mb-3">
             Forgot Password?
           </h2>
 
-      
           <p className="text-gray-500 mb-8 max-w-sm">
             We will sent a verification code to you registered email address
           </p>
@@ -123,7 +120,6 @@ const ForgotPasswordModal = ({ isOpen, onClose }) => {
             </div>
           )}
 
-
           <form onSubmit={handleSubmit} className="w-full space-y-6">
             <div className="text-left">
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -131,7 +127,7 @@ const ForgotPasswordModal = ({ isOpen, onClose }) => {
               </label>
               <div className="flex items-center rounded-xl overflow-hidden border-2 border-gray-200 focus-within:border-green-500 transition-colors">
                 <div className="flex items-center justify-center bg-green-500 px-4 py-3">
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http:
                     <path d="M10 10C12.21 10 14 8.21 14 6C14 3.79 12.21 2 10 2C7.79 2 6 3.79 6 6C6 8.21 7.79 10 10 10ZM10 12C7.33 12 2 13.34 2 16V18H18V16C18 13.34 12.67 12 10 12Z" fill="white"/>
                   </svg>
                 </div>
@@ -146,7 +142,6 @@ const ForgotPasswordModal = ({ isOpen, onClose }) => {
                 />
               </div>
             </div>
-
 
             <button
               type="submit"

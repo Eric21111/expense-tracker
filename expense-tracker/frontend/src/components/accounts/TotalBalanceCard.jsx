@@ -7,6 +7,13 @@ const TotalBalanceCard = ({
   onHistoryClick,
   formatAmount 
 }) => {
+  const formattedBalance = formatAmount(totalBalance);
+  console.log('🎴 TotalBalanceCard rendering:', { 
+    totalBalance, 
+    formattedBalance,
+    formatAmountType: typeof formatAmount
+  });
+  
   return (
     <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
       <div className="grid grid-cols-3 items-center gap-3 sm:gap-6 lg:gap-8">

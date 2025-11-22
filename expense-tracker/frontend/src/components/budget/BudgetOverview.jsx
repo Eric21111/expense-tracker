@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import BudgetCard from './BudgetCard';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
 import BudgetSuccessModal from './BudgetSuccessModal';
-import { getUserData, setUserData, DATA_TYPES } from '../../services/dataIsolationService';
+import BudgetDetailsModal from './BudgetDetailsModal';
+import { deleteBudget, archiveBudgetGroup } from '../../services/budgetApiService';
 
-const BudgetOverview = ({ 
+const BudgetOverview = ({
   budgets,
   formatAmount,
   calculateBudgetSpent,
@@ -14,10 +15,21 @@ const BudgetOverview = ({
 }) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedBudget, setSelectedBudget] = useState(null);
+  const [selectedBudgetGroup, setSelectedBudgetGroup] = useState(null);
+  const [selectedBudgetStats, setSelectedBudgetStats] = useState(null);
   const [isMultiBudget, setIsMultiBudget] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+
+  const handleCardClick = (budget, stats, group = null) => {
+    setSelectedBudget(budget);
+    setSelectedBudgetStats(stats);
+    setSelectedBudgetGroup(group);
+    setIsMultiBudget(!!group);
+    setShowDetailsModal(true);
+  };
 
   const handleDeleteClick = (budget, isMulti) => {
     setSelectedBudget(budget);
@@ -27,56 +39,59 @@ const BudgetOverview = ({
 
   const handleDelete = async () => {
     if (!selectedBudget) return;
-    
+
     setIsDeleting(true);
-    
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    const storedUser = localStorage.getItem('user');
-    let userEmail = '';
-    if (storedUser) {
-      try {
-        const user = JSON.parse(storedUser);
-        userEmail = user.email || '';
-      } catch (e) {}
+
+    try {
+      if (isMultiBudget) {
+        await archiveBudgetGroup(selectedBudget.groupId);
+      } else {
+        const budgetId = selectedBudget._id || selectedBudget.id;
+        await deleteBudget(budgetId, false);
+      }
+
+      setSuccessMessage(`Budget "${selectedBudget.name || selectedBudget.label || selectedBudget.category}" has been moved to archive.`);
+      setIsDeleting(false);
+      setShowDeleteModal(false);
+      setShowSuccessModal(true);
+
+      window.dispatchEvent(new Event('budgetUpdated'));
+    } catch (error) {
+      console.error('Error archiving budget:', error);
+      alert('Failed to archive budget. Please try again.');
+      setIsDeleting(false);
     }
-    
-    let archivedBudgets = getUserData(DATA_TYPES.ARCHIVED_BUDGETS, userEmail) || [];
-    
-    const archivedBudget = { ...selectedBudget, archivedAt: new Date().toISOString() };
-    
-    if (isMultiBudget) {
-      const budgetsToArchive = budgets.filter(b => b.groupId === selectedBudget.groupId);
-      budgetsToArchive.forEach(b => {
-        archivedBudgets.push({ ...b, archivedAt: new Date().toISOString() });
-      });
-      const remainingBudgets = budgets.filter(b => b.groupId !== selectedBudget.groupId);
-      saveBudgets(remainingBudgets);
-    } else {
-      archivedBudgets.push(archivedBudget);
-      const remainingBudgets = budgets.filter(b => b.id !== selectedBudget.id);
-      saveBudgets(remainingBudgets);
-    }
-    
-    setUserData(DATA_TYPES.ARCHIVED_BUDGETS, archivedBudgets, userEmail);
-    
-    setSuccessMessage(`Budget "${selectedBudget.name || selectedBudget.category}" has been moved to archive.`);
-    setIsDeleting(false);
-    setShowDeleteModal(false);
-    setShowSuccessModal(true);
   };
 
   const groupedBudgets = {};
   const singleBudgets = [];
-  
+  const labelGroups = {};
+
   budgets.forEach((budget) => {
     if (budget.groupId) {
       if (!groupedBudgets[budget.groupId]) {
         groupedBudgets[budget.groupId] = [];
       }
       groupedBudgets[budget.groupId].push(budget);
+    } else if (budget.label && budget.label.trim() !== '') {
+      
+      const normalizedLabel = budget.label.trim().toLowerCase();
+      if (!labelGroups[normalizedLabel]) {
+        labelGroups[normalizedLabel] = [];
+      }
+      labelGroups[normalizedLabel].push(budget);
     } else {
       singleBudgets.push(budget);
+    }
+  });
+
+  Object.entries(labelGroups).forEach(([normalizedLabel, budgetItems]) => {
+    if (budgetItems.length > 1) {
+      
+      const virtualGroupId = `label_${normalizedLabel}`;
+      groupedBudgets[virtualGroupId] = budgetItems;
+    } else {
+      singleBudgets.push(budgetItems[0]);
     }
   });
 
@@ -86,15 +101,15 @@ const BudgetOverview = ({
       const dateB = new Date(b[0].createdAt || b[0].id);
       return dateB - dateA;
     });
-  
+
   singleBudgets.sort((a, b) => {
     const dateA = new Date(a.createdAt || a.id);
     const dateB = new Date(b.createdAt || b.id);
     return dateB - dateA;
   });
-  
+
   const allBudgets = [];
-  
+
   multiBudgetGroups.forEach(group => {
     const firstBudget = group[0];
     allBudgets.push({
@@ -104,7 +119,7 @@ const BudgetOverview = ({
       data: group
     });
   });
-  
+
   singleBudgets.forEach(budget => {
     allBudgets.push({
       id: budget.id,
@@ -113,7 +128,7 @@ const BudgetOverview = ({
       data: budget
     });
   });
-  
+
   allBudgets.sort((a, b) => {
     const dateA = new Date(a.createdAt);
     const dateB = new Date(b.createdAt);
@@ -160,8 +175,9 @@ const BudgetOverview = ({
             const firstBudget = group[0];
 
             const categoryNames = group.map(b => b.category).join(', ');
-            const displayTitle = firstBudget.name || categoryNames;
-            
+            const displayTitle = firstBudget.label || firstBudget.name || categoryNames;
+            const showCategoryNames = firstBudget.label || firstBudget.name;
+
             return (
               <BudgetCard
                 key={firstBudget.groupId}
@@ -173,10 +189,15 @@ const BudgetOverview = ({
                 percentage={percentage}
                 status={status}
                 displayTitle={displayTitle}
-                categoryNames={categoryNames}
+                categoryNames={showCategoryNames ? categoryNames : null}
                 formatAmount={formatAmount}
                 onEdit={handleEdit}
                 onDelete={handleDeleteClick}
+                onClick={() => handleCardClick(
+                  firstBudget,
+                  { totalBudget, totalSpent, totalRemaining, percentage },
+                  group
+                )}
               />
             );
           } else {
@@ -186,8 +207,8 @@ const BudgetOverview = ({
             const remaining = Math.max(0, budget.amount - spent);
             const percentage = Math.min((spent / budget.amount) * 100, 100);
             const status = getBudgetStatus(spent, budget.amount);
-            const displayTitle = budget.name || budget.category;
-            
+            const displayTitle = budget.label || budget.name || budget.category;
+
             return (
               <BudgetCard
                 key={budget.id}
@@ -199,16 +220,20 @@ const BudgetOverview = ({
                 percentage={percentage}
                 status={status}
                 displayTitle={displayTitle}
-                categoryNames={null}
+                categoryNames={budget.label ? budget.category : null}
                 formatAmount={formatAmount}
                 onEdit={handleEdit}
                 onDelete={handleDeleteClick}
+                onClick={() => handleCardClick(
+                  budget,
+                  { totalBudget: budget.amount, totalSpent: spent, totalRemaining: remaining, percentage }
+                )}
               />
             );
           }
         })}
       </div>
-      
+
       <DeleteConfirmationModal
         isOpen={showDeleteModal}
         onClose={() => {
@@ -219,11 +244,23 @@ const BudgetOverview = ({
         budget={selectedBudget}
         isLoading={isDeleting}
       />
-      
+
       <BudgetSuccessModal
         isOpen={showSuccessModal}
         onClose={() => setShowSuccessModal(false)}
         message={successMessage}
+      />
+
+      <BudgetDetailsModal
+        isOpen={showDetailsModal}
+        onClose={() => setShowDetailsModal(false)}
+        budget={selectedBudget}
+        formatAmount={formatAmount}
+        totalSpent={selectedBudgetStats?.totalSpent || 0}
+        totalBudget={selectedBudgetStats?.totalBudget || 0}
+        percentage={selectedBudgetStats?.percentage || 0}
+        isMultiBudget={isMultiBudget}
+        budgetGroup={selectedBudgetGroup}
       />
     </div>
   );

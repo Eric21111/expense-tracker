@@ -44,6 +44,17 @@ const TransactionSchema = new mongoose.Schema({
   },
   budgetId: {
     type: String,
+    default: null,
+    index: true
+  },
+  budgetRef: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Budget",
+    default: null
+  },
+  accountId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Account",
     default: null
   }
 }, {

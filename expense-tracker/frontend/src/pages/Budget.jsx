@@ -11,23 +11,30 @@ import progressIcon from '../assets/budget/progress.svg';
 import shoppingIcon from '../assets/budget/pig.svg';
 import Sidebar from '../components/shared/Sidebar';
 import Header2 from '../components/shared/Header2';
-import BudgetModal from '../components/budget/BudgetModal';
+import BudgetModal from '../components/budget/BudgetModalNew';
 import BudgetResetNotification from '../components/budget/BudgetResetNotification';
 import BudgetStatCards from '../components/budget/BudgetStatCards';
 import BudgetAiInsights from '../components/budget/BudgetAiInsights';
 import BudgetOverview from '../components/budget/BudgetOverview';
+import BudgetMigration from '../components/budget/BudgetMigration';
 import { getTransactions, getTransactionSummary } from '../services/transactionService';
-import { 
-  loadBudgetsWithReset, 
-  saveBudgetsWithTracking, 
-  getResetNotification, 
-  clearResetNotification, 
-  getCurrentMonthDisplay 
+import {
+  getCurrentMonthDisplay
 } from '../services/budgetService';
+import {
+  createBudget,
+  getBudgets,
+  updateBudget,
+  deleteBudget,
+  loadBudgetsWithReset,
+  getResetNotification,
+  clearResetNotification
+} from '../services/budgetApiService';
 import { getAIInsights } from '../services/aiInsightsService';
 import { initializeBudgetReminders, stopBudgetReminders } from '../services/budgetReminderService';
 import { getUserData, setUserData, DATA_TYPES } from '../services/dataIsolationService';
 import { checkBudgetCompletions } from '../services/badgeService';
+import { checkAndStartTour } from '../utils/tutorial';
 import BillsIcon from '../assets/categories/bills.svg';
 import TransportationCategoryIcon from '../assets/categories/transportation.svg';
 import ShoppingCategoryIcon from '../assets/categories/shopping.svg';
@@ -60,40 +67,40 @@ const Budget = () => {
   });
 
   const categoryConfig = {
-    "Food": { 
-      icon: ShoppingCategoryIcon, 
+    "Food": {
+      icon: ShoppingCategoryIcon,
       gradient: "from-orange-400 to-orange-600",
-      color: "#FB923C" 
+      color: "#FB923C"
     },
-    "Transportation": { 
-      icon: TransportationCategoryIcon, 
+    "Transportation": {
+      icon: TransportationCategoryIcon,
       gradient: "from-blue-400 to-blue-600",
-      color: "#60A5FA" 
+      color: "#60A5FA"
     },
-    "Bills": { 
-      icon: BillsIcon, 
+    "Bills": {
+      icon: BillsIcon,
       gradient: "from-purple-400 to-purple-600",
-      color: "#A78BFA" 
+      color: "#A78BFA"
     },
-    "Entertainment": { 
-      icon: ShoppingCategoryIcon, 
+    "Entertainment": {
+      icon: ShoppingCategoryIcon,
       gradient: "from-yellow-400 to-amber-500",
-      color: "#FACC15" 
+      color: "#FACC15"
     },
-    "Shopping": { 
-      icon: ShoppingCategoryIcon, 
+    "Shopping": {
+      icon: ShoppingCategoryIcon,
       gradient: "from-pink-500 to-pink-600",
-      color: "#EC4899" 
+      color: "#EC4899"
     },
-    "Grocery": { 
-      icon: ShoppingCategoryIcon, 
+    "Grocery": {
+      icon: ShoppingCategoryIcon,
       gradient: "from-green-500 to-green-600",
-      color: "#10B981" 
+      color: "#10B981"
     },
-    "Others": { 
-      icon: ShoppingCategoryIcon, 
+    "Others": {
+      icon: ShoppingCategoryIcon,
       gradient: "from-green-400 to-green-500",
-      color: "#34D399" 
+      color: "#34D399"
     }
   };
 
@@ -103,9 +110,13 @@ const Budget = () => {
       try {
         const user = JSON.parse(storedUser);
         setUsername(user.name || user.displayName || 'User');
-        setUserEmail(user.email || ''); 
-      } catch (e) {}
+        setUserEmail(user.email || '');
+      } catch (e) { }
     }
+  }, []);
+
+  useEffect(() => {
+    checkAndStartTour();
   }, []);
 
   useEffect(() => {
@@ -113,16 +124,43 @@ const Budget = () => {
       loadBudgets();
       fetchTransactions();
       loadAccounts();
-      
+
       initializeBudgetReminders(userEmail);
     }
-    
+
     return () => {
       stopBudgetReminders();
     };
   }, [userEmail]);
 
-  
+  useEffect(() => {
+    const handleTransactionAdded = () => {
+      if (userEmail) {
+        
+        fetchTransactions();
+        loadBudgets();
+        loadAccounts();
+      }
+    };
+
+    const handleBudgetUpdated = () => {
+      if (userEmail) {
+        
+        loadBudgets();
+      }
+    };
+
+    window.addEventListener('transactionAdded', handleTransactionAdded);
+    window.addEventListener('budgetUpdated', handleBudgetUpdated);
+    window.addEventListener('budgetDeleted', handleBudgetUpdated);
+
+    return () => {
+      window.removeEventListener('transactionAdded', handleTransactionAdded);
+      window.removeEventListener('budgetUpdated', handleBudgetUpdated);
+      window.removeEventListener('budgetDeleted', handleBudgetUpdated);
+    };
+  }, [userEmail]);
+
   useEffect(() => {
     if (userEmail && transactions.length >= 0 && !loading) {
       loadAccounts();
@@ -144,12 +182,12 @@ const Budget = () => {
       try {
         const currency = getCurrencyCode();
         const result = await getAIInsights(budgets, currency);
-        
+
         if (result && (result.success || result.insights)) {
           const formattedInsights = [];
-          
+
           let parsedInsights = [];
-          
+
           if (Array.isArray(result.insights)) {
             parsedInsights = result.insights;
           } else if (typeof result.insights === 'string') {
@@ -168,7 +206,7 @@ const Budget = () => {
           } else if (result.insights && typeof result.insights === 'object') {
             parsedInsights = [result.insights];
           }
-          
+
           if (parsedInsights && Array.isArray(parsedInsights) && parsedInsights.length > 0) {
             parsedInsights.forEach((insight, index) => {
               if (formattedInsights.length < 3 && insight && typeof insight === 'object') {
@@ -181,10 +219,10 @@ const Budget = () => {
                 } else if (insight.message || insight.text) {
                   const message = insight.message || insight.text || '';
                   const lowerMessage = message.toLowerCase();
-                  
+
                   let type = 'info';
                   let title = 'AI Recommendation';
-                  
+
                   if (lowerMessage.includes('exceed') || lowerMessage.includes('over')) {
                     type = 'danger';
                     title = 'Budget Alert';
@@ -195,7 +233,7 @@ const Budget = () => {
                     type = 'success';
                     title = 'Great Progress';
                   }
-                  
+
                   formattedInsights.push({ type, title, message });
                 }
               }
@@ -207,17 +245,17 @@ const Budget = () => {
             } else if (typeof result === 'string') {
               insightText = result;
             }
-            
+
             if (typeof insightText === 'string' && insightText.trim()) {
               const sentences = insightText.split(/[.!?]+/).filter(s => s.trim());
-              
+
               sentences.forEach((sentence, index) => {
                 if (sentence.trim() && formattedInsights.length < 3) {
                   const lowerSentence = sentence.toLowerCase();
-                  
+
                   let type = 'info';
                   let title = 'AI Recommendation';
-                  
+
                   if (lowerSentence.includes('exceed') || lowerSentence.includes('over')) {
                     type = 'danger';
                     title = 'Budget Alert';
@@ -234,7 +272,7 @@ const Budget = () => {
                     type = 'info';
                     title = 'Recommendation';
                   }
-                  
+
                   formattedInsights.push({
                     type,
                     title,
@@ -244,7 +282,7 @@ const Budget = () => {
               });
             }
           }
-          
+
           if (formattedInsights.length === 0) {
             formattedInsights.push({
               type: 'info',
@@ -252,7 +290,7 @@ const Budget = () => {
               message: typeof insightText === 'string' ? insightText : 'Keep tracking your expenses to get better insights.'
             });
           }
-          
+
           setAiInsights(formattedInsights);
         } else {
           setAiInsights(generateBasicInsights());
@@ -270,20 +308,29 @@ const Budget = () => {
 
   const loadBudgets = async () => {
     if (!userEmail) return;
-    
-    const budgetsWithReset = loadBudgetsWithReset(userEmail);
-    setBudgets(budgetsWithReset);
-    
-    await checkBudgetCompletions(userEmail);
-    
-    const notification = getResetNotification(userEmail);
-    if (notification) {
-      setResetNotification(notification);
+
+    try {
+      const budgetsWithReset = await loadBudgetsWithReset(userEmail);
+      
+      const formattedBudgets = budgetsWithReset.map(b => ({
+        ...b,
+        id: b._id || b.id
+      }));
+      setBudgets(formattedBudgets);
+
+      await checkBudgetCompletions(userEmail);
+
+      const notification = getResetNotification(userEmail);
+      if (notification) {
+        setResetNotification(notification);
+      }
+    } catch (error) {
+      console.error('Error loading budgets:', error);
     }
   };
   const loadAccounts = () => {
     if (!userEmail) return;
-    
+
     try {
       const parsedAccounts = getUserData(DATA_TYPES.ACCOUNTS, userEmail);
       if (parsedAccounts && Array.isArray(parsedAccounts)) {
@@ -339,51 +386,66 @@ const Budget = () => {
       .reduce((sum, t) => sum + t.amount, 0);
   };
 
-  const calculateBudgetSpent = (budgetId, category, isMultiBudget = false, groupId = null) => {
-    let budget = null;
-    if (isMultiBudget && groupId) {
-      budget = budgets.find(b => b.groupId === groupId && b.category === category);
-    } else {
-      budget = budgets.find(b => b.id === budgetId || b.id === parseInt(budgetId));
-    }
-    const expenseResetDate = budget?.lastExpenseReset ? new Date(budget.lastExpenseReset) : null;
-    let relevantTransactions = transactions;
-    if (expenseResetDate) {
-      relevantTransactions = transactions.filter(t => {
-        const transactionDate = new Date(t.date || t.createdAt);
-        return transactionDate >= expenseResetDate;
-      });
-    }
-    if (isMultiBudget && groupId) {
-      const groupSpecificExpenses = relevantTransactions.filter(t => 
-        t.budgetId && t.budgetId === groupId && t.category.toLowerCase() === category?.toLowerCase()
-      );
-      const unassignedExpenses = relevantTransactions.filter(t => 
-        !t.budgetId && t.category.toLowerCase() === category?.toLowerCase()
-      );
-      return groupSpecificExpenses.reduce((sum, t) => sum + t.amount, 0) +
-             unassignedExpenses.reduce((sum, t) => sum + t.amount, 0);
-    }
-    const budgetSpecificExpenses = relevantTransactions.filter(t => 
-      t.budgetId && (t.budgetId === budgetId?.toString() || t.budgetId === budgetId)
+  const calculateBudgetSpent = (budgetId, category) => {
+    const budget = budgets.find(b =>
+      b.id === budgetId ||
+      b._id === budgetId ||
+      String(b.id) === String(budgetId) ||
+      String(b._id) === String(budgetId)
     );
-    const unassignedExpenses = relevantTransactions.filter(t => 
-      !t.budgetId && t.category.toLowerCase() === category?.toLowerCase()
+
+    if (!budget) {
+      return 0;
+    }
+
+    const categoryTransactions = transactions.filter(t =>
+      t.category?.toLowerCase() === category?.toLowerCase()
     );
-    return budgetSpecificExpenses.reduce((sum, t) => sum + t.amount, 0) +
-           unassignedExpenses.reduce((sum, t) => sum + t.amount, 0);
+
+    const matchingTransactions = categoryTransactions.filter(t => {
+      if (!t.budgetId) return false;
+
+      const tBudgetId = String(t.budgetId);
+      const bId = String(budget.id || budget._id);
+
+      return tBudgetId === bId;
+    });
+
+    return matchingTransactions.reduce((sum, t) => sum + t.amount, 0);
   };
 
-  const saveBudgets = (newBudgets) => {
+  const saveBudgets = async (newBudgets) => {
     if (!userEmail) return;
-    const success = setUserData(DATA_TYPES.BUDGETS, newBudgets, userEmail);
-    if (success) {
-      setBudgets(newBudgets);
+
+    try {
+      const isCreating = newBudgets.length > budgets.length;
+
+      if (isCreating) {
+        
+        const budgetsToCreate = newBudgets.filter(nb =>
+          !budgets.find(b => b.id === nb.id || b._id === nb.id)
+        );
+
+        if (budgetsToCreate.length > 0) {
+          
+          await createBudget(budgetsToCreate);
+        }
+      } else {
+        
+        const budgetToUpdate = newBudgets.find(nb =>
+          budgets.find(b => (b.id === nb.id || b._id === nb.id) && JSON.stringify(b) !== JSON.stringify(nb))
+        );
+
+        if (budgetToUpdate && (budgetToUpdate._id || budgetToUpdate.id)) {
+          await updateBudget(budgetToUpdate._id || budgetToUpdate.id, budgetToUpdate);
+        }
+      }
+
+      await loadBudgets();
       loadAccounts();
-      const eventType = newBudgets.length > budgets.length ? 'budgetCreated' : 'budgetUpdated';
-      window.dispatchEvent(new Event(eventType));
-    } else {
-      console.error('Failed to save budgets - unauthorized access');
+    } catch (error) {
+      console.error('Error saving budgets:', error);
+      alert('Failed to save budget. Please try again.');
     }
   };
 
@@ -392,7 +454,7 @@ const Budget = () => {
     setResetNotification(null);
   };
 
-  const handleSubmit = (e, updatedFormData = null) => {
+  const handleSubmit = async (e, updatedFormData = null) => {
     e.preventDefault();
     if (Array.isArray(updatedFormData)) {
       const timestamp = Date.now();
@@ -405,33 +467,37 @@ const Budget = () => {
           groupId: groupId,
           budgetType: 'Multi',
           amount: parseFloat(item.amount),
-          totalBudget: item.totalBudget, 
-          categoryCount: item.categoryCount, 
-          dueDate: item.dueDate || null, 
+          totalBudget: item.totalBudget,
+          categoryCount: item.categoryCount,
+          dueDate: item.dueDate || null,
           createdAt: new Date().toISOString(),
           icon: item.icon || config.icon,
           iconColor: item.iconColor || config.color || '#34A853',
           gradient: config.gradient
         };
       });
-      saveBudgets([...budgets, ...newBudgets]);
+      await saveBudgets([...budgets, ...newBudgets]);
+      window.dispatchEvent(new Event('budgetCreated'));
     } else if (editingBudget) {
       const dataToUse = updatedFormData || formData;
       const config = categoryConfig[dataToUse.category] || categoryConfig["Others"];
       const updatedBudgets = budgets.map((budget) =>
-        budget.id === editingBudget.id
-          ? { 
-              ...dataToUse, 
-              id: editingBudget.id, 
-              amount: parseFloat(dataToUse.amount),
-              dueDate: dataToUse.dueDate || null, 
-              icon: config.icon,
-              iconColor: config.color || '#34A853',
-              gradient: config.gradient
-            }
+        (budget.id === editingBudget.id || budget._id === editingBudget._id)
+          ? {
+            ...dataToUse,
+            id: editingBudget.id,
+            _id: editingBudget._id,
+            amount: parseFloat(dataToUse.amount),
+            dueDate: dataToUse.dueDate || null,
+            icon: config.icon,
+            iconColor: config.color || '#34A853',
+            gradient: config.gradient
+          }
           : budget
       );
-      saveBudgets(updatedBudgets);
+      await saveBudgets(updatedBudgets);
+      window.dispatchEvent(new Event('budgetUpdated'));
+      closeModal();
     } else {
       const dataToUse = updatedFormData || formData;
       const config = categoryConfig[dataToUse.category] || categoryConfig["Others"];
@@ -439,15 +505,15 @@ const Budget = () => {
         ...dataToUse,
         id: Date.now(),
         amount: parseFloat(dataToUse.amount),
-        dueDate: dataToUse.dueDate || null, 
+        dueDate: dataToUse.dueDate || null,
         createdAt: new Date().toISOString(),
         icon: config.icon,
         iconColor: config.color || '#34A853',
         gradient: config.gradient
       };
-      saveBudgets([...budgets, newBudget]);
+      await saveBudgets([...budgets, newBudget]);
+      window.dispatchEvent(new Event('budgetCreated'));
     }
-    closeModal();
   };
 
   const handleEdit = (budget) => {
@@ -521,13 +587,13 @@ const Budget = () => {
       if (isMultiBudget) {
         const groupBudgets = budgets.filter(b => b.groupId === budget.groupId);
         spent = groupBudgets.reduce((sum, b) => {
-          return sum + calculateBudgetSpent(b.id || b.groupId, b.category, true, b.groupId);
+          return sum + calculateBudgetSpent(b.id, b.category);
         }, 0);
         budgetAmount = budget.totalBudget || groupBudgets.reduce((sum, b) => sum + b.amount, 0);
         budgetName = budget.name || 'Multiple Categories';
         processedGroups.add(budget.groupId);
       } else {
-        spent = calculateBudgetSpent(budgetId, budget.category, false);
+        spent = calculateBudgetSpent(budgetId, budget.category);
         budgetAmount = budget.amount;
         budgetName = budget.name || budget.category;
       }
@@ -560,9 +626,8 @@ const Budget = () => {
     <div className="flex min-h-screen bg-[#F5F5F5] font-poppins">
       <Sidebar />
       <main
-        className={`flex-1 bg-gray-50 transition-all duration-300 ease-in-out ml-0 lg:ml-20 ${
-          isExpanded ? "lg:ml-64" : "lg:ml-20"
-        }`}
+        className={`flex-1 bg-gray-50 transition-all duration-300 ease-in-out ml-0 lg:ml-20 ${isExpanded ? "lg:ml-64" : "lg:ml-20"
+          }`}
       >
         <Header2 username={username} title="Budget" />
         <div className="w-full max-w-[1400px] px-4 sm:px-6 lg:px-8 py-4 sm:py-6 mx-auto">
@@ -579,15 +644,19 @@ const Budget = () => {
               <span className="sm:hidden">Archive</span>
             </button>
           </div>
-          <BudgetResetNotification 
+          <BudgetResetNotification
             resetNotification={resetNotification}
             onDismiss={handleDismissNotification}
             getCurrentMonthDisplay={getCurrentMonthDisplay}
           />
+          <BudgetMigration
+            userEmail={userEmail}
+            onMigrationComplete={loadBudgets}
+          />
           <div className="flex flex-col xl:flex-row gap-4 sm:gap-6 lg:gap-8">
             <div className="w-full xl:w-[58%]">
               <div className="mb-4 sm:mb-6">
-                <BudgetStatCards 
+                <BudgetStatCards
                   loading={loading}
                   totalBudgeted={totalBudgeted}
                   totalExpense={summary.totalExpense}
@@ -598,7 +667,7 @@ const Budget = () => {
                   coinsIcon={coinsIcon}
                 />
               </div>
-              <BudgetOverview 
+              <BudgetOverview
                 budgets={budgets}
                 formatAmount={formatAmount}
                 calculateBudgetSpent={calculateBudgetSpent}
@@ -608,7 +677,7 @@ const Budget = () => {
               />
             </div>
             <div className="w-full xl:w-[42%] xl:sticky xl:top-4 xl:self-start">
-              <BudgetAiInsights 
+              <BudgetAiInsights
                 aiInsights={aiInsights}
                 aiInsightsLoading={aiInsightsLoading}
                 aiIcon={aiIcon}
@@ -622,6 +691,7 @@ const Budget = () => {
       </main>
 
       <button
+        id="add-budget-button"
         onClick={openModal}
         className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 lg:bottom-8 lg:right-8 w-12 h-12 sm:w-14 sm:h-14 bg-[#4CAF50] text-white rounded-full shadow-lg hover:bg-[#45a049] transition-all hover:scale-105 flex items-center justify-center z-40"
         aria-label="Add Budget"
@@ -632,14 +702,11 @@ const Budget = () => {
         <BudgetModal
           onClose={closeModal}
           onSubmit={handleSubmit}
-          formData={formData}
-          setFormData={setFormData}
           editingBudget={editingBudget}
         />
       )}
     </div>
   );
 };
-
 
 export default Budget;

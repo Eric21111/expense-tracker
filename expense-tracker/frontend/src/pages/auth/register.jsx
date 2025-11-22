@@ -12,7 +12,6 @@ import PasswordInput from "../../components/PasswordInput";
 import Header from "../../components/shared/Header";
 import EmailVerificationModal from "../../components/EmailVerificationModal";
 
-
 const Register = () => {
   const [mounted, setMounted] = useState(false);
   const [firstName, setFirstName] = useState("");
@@ -22,12 +21,50 @@ const Register = () => {
   const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [userDataForVerification, setUserDataForVerification] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [emailError, setEmailError] = useState("");
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     const t = setTimeout(() => setMounted(true), 10);
     return () => clearTimeout(t);
   }, []);
+
+  const checkEmailExists = async (emailToCheck) => {
+    if (!emailToCheck || !emailToCheck.includes('@')) {
+      setEmailError("");
+      return;
+    }
+
+    setIsCheckingEmail(true);
+    try {
+      const res = await axios.post("http://localhost:5000/users/check-email", {
+        email: emailToCheck,
+      });
+      
+      if (res.data.exists) {
+        setEmailError("This email is already registered. Please use a different email or sign in.");
+      } else {
+        setEmailError("");
+      }
+    } catch (err) {
+      setEmailError("");
+    } finally {
+      setIsCheckingEmail(false);
+    }
+  };
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (email) {
+        checkEmailExists(email);
+      } else {
+        setEmailError("");
+      }
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [email]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -37,13 +74,12 @@ const Register = () => {
 
     setIsLoading(true);
     try {
-      const res = await axios.post("http://localhost:5000/users/register", {
+      const res = await axios.post("http:
         name: `${firstName} ${lastName}`,
         email,
         password,
       });
-      
-      
+
       if (res.data.requiresVerification) {
       
         setUserDataForVerification({
@@ -64,7 +100,15 @@ const Register = () => {
         navigate("/dashboard");
       }
     } catch (err) {
-      console.error("Registration error:", err.response?.data?.error || "Registration failed.");
+      const errorMessage = err.response?.data?.error || "Registration failed.";
+      console.error("Registration error:", errorMessage);
+      
+      if (errorMessage.includes("Email already exists") || errorMessage.includes("email already exists")) {
+        setEmailError("This email is already registered. Please use a different email or sign in.");
+      } else {
+        setEmailError("");
+      }
+      
       setIsLoading(false);
     }
   };
@@ -75,7 +119,7 @@ const Register = () => {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
-      const res = await axios.post("http://localhost:5000/users/google", {
+      const res = await axios.post("http:
         name: user.displayName,
         email: user.email,
         photoURL: user.photoURL,
@@ -101,7 +145,6 @@ const Register = () => {
     <div className="min-h-screen flex flex-col bg-[#F5F5F5] font-poppins">
       <Header/>
       <main className="flex-1 flex items-center justify-center py-4 px-4 sm:py-6 lg:py-6 lg:m-1">
-     
           <div className="hidden lg:block relative flex-1 order-2 ">
             <div className="hidden lg:block relative flex-1">
               <div
@@ -137,7 +180,6 @@ const Register = () => {
             style={{ transitionDuration: "400ms" }}
           >
 
-
             <div className="flex flex-col items-center text-center mb-4 sm:mb-6">
               <img src={Logo} alt="Trackit Logo" className="w-12 h-12 sm:w-14 sm:h-14 mb-2 sm:mb-3" />
               <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 px-2">
@@ -145,7 +187,6 @@ const Register = () => {
               </h2>
             </div>
 
-          
             <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
 
               <div className="flex flex-col sm:flex-row gap-3">
@@ -174,25 +215,43 @@ const Register = () => {
                 </div>
               </div>
 
-             
-              <div className="border border-green-300 rounded-xl overflow-hidden flex items-center">
-                <div className="flex items-center justify-center bg-green-500 px-3 sm:px-4 py-3 sm:py-4">
-                  <FaUser className="text-white text-sm sm:text-base" />
+              <div>
+                <div className={`border ${emailError ? 'border-red-400' : 'border-green-300'} rounded-xl overflow-hidden flex items-center`}>
+                  <div className="flex items-center justify-center bg-green-500 px-3 sm:px-4 py-3 sm:py-4">
+                    <FaUser className="text-white text-sm sm:text-base" />
+                  </div>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      setEmailError("");
+                    }}
+                    onBlur={() => {
+                      if (email) {
+                        checkEmailExists(email);
+                      }
+                    }}
+                    placeholder="Enter your email..."
+                    className="flex-1 px-3 py-2.5 sm:px-4 sm:py-3 outline-none text-sm text-gray-700 placeholder-gray-400"
+                    required
+                    disabled={isLoading}
+                  />
                 </div>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email..."
-                  className="flex-1 px-3 py-2.5 sm:px-4 sm:py-3 outline-none text-sm text-gray-700 placeholder-gray-400"
-                  required
-                  disabled={isLoading}
-                />
+                {emailError && (
+                  <p className="mt-1.5 text-xs sm:text-sm text-red-600 flex items-center gap-1">
+                    <span>⚠️</span>
+                    <span>{emailError}</span>
+                  </p>
+                )}
+                {isCheckingEmail && !emailError && (
+                  <p className="mt-1.5 text-xs sm:text-sm text-gray-500">
+                    Checking email...
+                  </p>
+                )}
               </div>
 
-             
               <PasswordInput password={password} setPassword={setPassword} disabled={isLoading} />
-
 
               <div className="text-xs sm:text-sm text-center">
                 Already have an account?{" "}
@@ -216,14 +275,12 @@ const Register = () => {
               </button>
             </form>
 
-          
             <div className="mt-4 sm:mt-6 mb-3 sm:mb-4 flex items-center gap-3">
               <div className="flex-1 h-px bg-gray-200" />
               <div className="text-xs text-gray-400">or</div>
               <div className="flex-1 h-px bg-gray-200" />
             </div>
 
-           
             <button
               onClick={handleGoogleLogin}
               className="w-full flex items-center justify-center gap-2 sm:gap-3 border border-gray-300 py-2.5 sm:py-3 rounded-lg hover:bg-gray-50 shadow-sm transition transform hover:scale-[1.01] duration-150"
@@ -234,7 +291,6 @@ const Register = () => {
               </span>
             </button>
           </div>
-        
       </main>
       
       <EmailVerificationModal

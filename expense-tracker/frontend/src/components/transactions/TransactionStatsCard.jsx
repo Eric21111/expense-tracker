@@ -23,7 +23,6 @@ const TransactionStatsCard = () => {
         <p className="text-xs text-gray-400">Spent so far for this month</p>
       </div>
 
-  
       <div className="flex flex-col items-center text-center">
         <div
           className="w-12 h-12 rounded-full flex items-center justify-center mb-2"

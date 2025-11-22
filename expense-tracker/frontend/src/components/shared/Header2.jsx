@@ -24,13 +24,11 @@ const Header2 = ({ username, title }) => {
     }
   }, []);
 
-  
   useEffect(() => {
     if (userEmail) {
     
       processAndShowAlerts(userEmail);
-      
-      
+
       const interval = setInterval(() => {
         processAndShowAlerts(userEmail);
       }, 5 * 60 * 1000);

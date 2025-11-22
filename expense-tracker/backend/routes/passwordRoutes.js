@@ -3,12 +3,9 @@ import { forgotPassword, verifyCode, resetPassword } from "../controllers/passwo
 
 const router = express.Router();
 
-
 router.post("/forgot-password", forgotPassword);
 
-
 router.post("/verify-code", verifyCode);
-
 
 router.post("/reset-password", resetPassword);
 

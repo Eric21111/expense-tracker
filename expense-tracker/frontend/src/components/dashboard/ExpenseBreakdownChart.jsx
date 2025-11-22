@@ -10,6 +10,7 @@ import {
   Cell,
 } from "recharts";
 import { getTransactions } from "../../services/transactionService";
+import { useCurrency } from "../../contexts/CurrencyContext";
 
 const categoryColors = {
   Food: "url(#colorFood)",
@@ -21,11 +22,11 @@ const categoryColors = {
   Others: "url(#colorOthers)"
 };
 
-const CustomTooltip = ({ active, payload }) => {
+const CustomTooltip = ({ active, payload, formatAmount }) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-gray-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap z-10 shadow-lg">
-        PHP {payload[0].value.toLocaleString()}
+        {formatAmount(payload[0].value)}
       </div>
     );
   }
@@ -33,11 +34,11 @@ const CustomTooltip = ({ active, payload }) => {
 };
 
 const ExpenseBreakdownChart = ({ dateRange }) => {
+  const { formatAmount, getCurrencySymbol } = useCurrency();
   const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [maxValue, setMaxValue] = useState(5000);
 
-  
   useEffect(() => {
     fetchExpenseData();
   }, [dateRange]);
@@ -55,10 +56,10 @@ const ExpenseBreakdownChart = ({ dateRange }) => {
         const endDate = new Date(dateRange.end);
         endDate.setHours(23, 59, 59, 999);
         
-        response = await getTransactions(
-          startDate.toISOString(),
-          endDate.toISOString()
-        );
+        response = await getTransactions({
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString()
+        });
       } else {
        
         response = await getTransactions();
@@ -74,8 +75,7 @@ const ExpenseBreakdownChart = ({ dateRange }) => {
             categorySpending[category] = (categorySpending[category] || 0) + transaction.amount;
           }
         });
-        
-     
+
         const data = Object.entries(categorySpending)
           .map(([name, value]) => ({
             name,
@@ -85,8 +85,7 @@ const ExpenseBreakdownChart = ({ dateRange }) => {
           .sort((a, b) => b.value - a.value);
         
         setChartData(data);
-        
-       
+
         if (data.length > 0) {
           const maxSpending = Math.max(...data.map(d => d.value));
           setMaxValue(Math.ceil(maxSpending / 1000) * 1000 || 5000);
@@ -98,7 +97,6 @@ const ExpenseBreakdownChart = ({ dateRange }) => {
       setLoading(false);
     }
   };
-
 
   const top3 = chartData.slice(0, 3);
 
@@ -117,7 +115,7 @@ const ExpenseBreakdownChart = ({ dateRange }) => {
         </div>
       ) : chartData.length === 0 ? (
         <div className="flex items-center justify-center h-64">
-          <p className="text-gray-600">No expense data for this month</p>
+          <p className="text-gray-600">{dateRange ? "No expenses in selected date range" : "No expense data for this month"}</p>
         </div>
       ) : (
       <div className="grid grid-cols-1 md:grid-cols-[1.3fr_0.7fr] gap-6">
@@ -178,12 +176,12 @@ const ExpenseBreakdownChart = ({ dateRange }) => {
                 ticks={[0, Math.round(maxValue * 0.2), Math.round(maxValue * 0.4), Math.round(maxValue * 0.6), Math.round(maxValue * 0.8), maxValue]}
                 axisLine={false}
                 tickLine={false}
-                tick={{ fontSize: 17, fill: "#000000", fontWeight: 900, fontFamily: "Arial Black, sans-serif" }}
-                width={85}
-                tickFormatter={(value) => value.toLocaleString()}
+                tick={{ fontSize: 15, fill: "#000000", fontWeight: 900, fontFamily: "Arial Black, sans-serif" }}
+                width={110}
+                tickFormatter={(value) => formatAmount(value)}
               />
               <Tooltip
-                content={<CustomTooltip />}
+                content={<CustomTooltip formatAmount={formatAmount} />}
                 cursor={{ fill: "transparent" }}
                 wrapperStyle={{ zIndex: 50 }}
               />
@@ -202,7 +200,6 @@ const ExpenseBreakdownChart = ({ dateRange }) => {
           </ResponsiveContainer>
         </div>
 
-      
         <div className="flex flex-col justify-center h-full">
           <h3 className="text-base font-bold text-green-600 mb-3">
             Top 3 Spending
@@ -215,7 +212,7 @@ const ExpenseBreakdownChart = ({ dateRange }) => {
                     <span className="text-sm text-gray-800 font-medium">{index + 1}.</span>
                     <p className="text-sm text-gray-800 font-medium">{item.name}</p>
                   </div>
-                  <p className="text-sm text-gray-800 font-medium">PHP {item.value.toLocaleString()}</p>
+                  <p className="text-sm text-gray-800 font-medium">{formatAmount(item.value)}</p>
                 </div>
               ))
             ) : (

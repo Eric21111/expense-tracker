@@ -35,7 +35,6 @@ const ResetPasswordModal = ({ isOpen, onClose, email, verificationCode }) => {
       return;
     }
 
-   
     const hasUpperCase = /[A-Z]/.test(newPassword);
     const hasLowerCase = /[a-z]/.test(newPassword);
     const hasNumber = /[0-9]/.test(newPassword);
@@ -51,13 +50,12 @@ const ResetPasswordModal = ({ isOpen, onClose, email, verificationCode }) => {
     setMessage("");
 
     try {
-      const res = await axios.post("http://localhost:5000/users/reset-password", {
+      const res = await axios.post("http:
         email,
         code: verificationCode,
         newPassword,
       });
-      
-      
+
       setShowSuccessModal(true);
     } catch (error) {
       setMessage(error.response?.data?.error || "❌ Failed to reset password. Please try again.");
@@ -112,7 +110,6 @@ const ResetPasswordModal = ({ isOpen, onClose, email, verificationCode }) => {
             />
           </div>
 
-      
           <h2 className="text-3xl font-bold text-gray-900 mb-3">
             Reset Password
           </h2>
@@ -121,7 +118,6 @@ const ResetPasswordModal = ({ isOpen, onClose, email, verificationCode }) => {
             Enter your new password below
           </p>
 
-        
           {message && (
             <div
               className={`mb-6 p-3 rounded-lg text-sm w-full ${
@@ -133,7 +129,6 @@ const ResetPasswordModal = ({ isOpen, onClose, email, verificationCode }) => {
               {message}
             </div>
           )}
-
 
           <form onSubmit={handleSubmit} className="w-full space-y-5">
             
@@ -164,7 +159,6 @@ const ResetPasswordModal = ({ isOpen, onClose, email, verificationCode }) => {
               </div>
             </div>
 
-         
             <div className="text-left">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Confirm Password
@@ -192,7 +186,6 @@ const ResetPasswordModal = ({ isOpen, onClose, email, verificationCode }) => {
               </div>
             </div>
 
-           
             <div className="text-left bg-gray-50 p-4 rounded-lg">
               <p className="text-xs font-semibold text-gray-700 mb-2">Password must contain:</p>
               <ul className="text-xs text-gray-600 space-y-1">
@@ -214,7 +207,6 @@ const ResetPasswordModal = ({ isOpen, onClose, email, verificationCode }) => {
               </ul>
             </div>
 
-         
             <button
               type="submit"
               className="w-full py-3.5 px-6 rounded-xl text-white font-semibold bg-green-500 hover:bg-green-600 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
@@ -226,7 +218,6 @@ const ResetPasswordModal = ({ isOpen, onClose, email, verificationCode }) => {
         </div>
       </div>
 
-  
       <SuccessModal
         isOpen={showSuccessModal}
         onClose={handleClose}

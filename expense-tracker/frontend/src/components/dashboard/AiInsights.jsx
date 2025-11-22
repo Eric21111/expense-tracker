@@ -23,7 +23,6 @@ const AiInsights = () => {
     }
   }, []);
 
- 
   const insightConfig = {
     warning: {
       icon: FaExclamationTriangle,
@@ -94,7 +93,6 @@ const AiInsights = () => {
         </div>
       </div>
 
-      
       {loading ? (
         <div className="text-center py-8">
           <p className="text-gray-600">Generating insights...</p>
@@ -136,7 +134,6 @@ const AiInsights = () => {
         </div>
       )}
 
-     
       <button
         onClick={fetchInsights}
         disabled={loading}

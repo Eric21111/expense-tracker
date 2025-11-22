@@ -5,7 +5,6 @@ const DeleteAccountModal = ({ isOpen, onClose, onConfirm, isLoading }) => {
   const [confirmText, setConfirmText] = useState("");
   const CONFIRM_KEYWORD = "CONFIRM";
 
- 
   useEffect(() => {
     if (!isOpen) {
       setConfirmText("");

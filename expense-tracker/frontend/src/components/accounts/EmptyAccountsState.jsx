@@ -12,6 +12,7 @@ const EmptyAccountsState = ({ onAddAccount }) => {
         Start by adding your first account to track your finances
       </p>
       <button
+        id="add-first-account-button"
         onClick={onAddAccount}
         className="px-5 py-2.5 sm:px-6 sm:py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors font-medium text-sm sm:text-base"
       >

@@ -54,8 +54,6 @@ const Home = () => {
     });
   };
 
- 
-  
   return (
     <div className="font-poppins bg-[#f5f5f5] overflow-x-hidden pt-16 md:pt-20">
       <Header/>
@@ -112,7 +110,6 @@ const Home = () => {
               <p className="text-base leading-relaxed text-[#6D7278] mt-3">Easily record your daily transactions — manually or using image upload for faster entry.</p>
             </div>
 
-
             <div className="bg-white rounded-2xl p-[40px_30px] shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition-all hover:-translate-y-1 hover:shadow-[0_8px_16px_rgba(0,0,0,0.12)] hover:bg-[#d1f4e0] cursor-pointer">
               <div className="w-20 h-20 bg-[#d1f4e0] rounded-full mx-auto mb-5 flex items-center justify-center">
                 <img src={IconSpending} alt="Spending" className="w-10 h-10" />
@@ -120,7 +117,6 @@ const Home = () => {
               <h3 className="text-xl font-bold text-[#34A853]">Categorize<br />Spendings</h3>
               <p className="text-base leading-relaxed text-[#6D7278] mt-3">Automatically or manually organize your expenses under categories like Food, Bills, or Transport.</p>
             </div>
-
 
             <div className="bg-white rounded-2xl p-[40px_30px] shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition-all hover:-translate-y-1 hover:shadow-[0_8px_16px_rgba(0,0,0,0.12)] hover:bg-[#d1f4e0] cursor-pointer">
               <div className="w-20 h-20 bg-[#d1f4e0] rounded-full mx-auto mb-5 flex items-center justify-center">
@@ -130,7 +126,6 @@ const Home = () => {
               <p className="text-base leading-relaxed text-[#6D7278] mt-3">Get personalized recommendations and spending analyses to help you make smarter decisions.</p>
             </div>
 
-
             <div className="bg-white rounded-2xl p-[40px_30px] shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition-all hover:-translate-y-1 hover:shadow-[0_8px_16px_rgba(0,0,0,0.12)] hover:bg-[#d1f4e0] cursor-pointer">
               <div className="w-20 h-20 bg-[#d1f4e0] rounded-full mx-auto mb-5 flex items-center justify-center">
                 <img src={IconBudgetMonitor} alt="Budget Monitor" className="w-10 h-10" />
@@ -138,7 +133,6 @@ const Home = () => {
               <h3 className="text-xl font-bold text-[#34A853]">Budget Planning<br />and Monitoring</h3>
               <p className="text-base leading-relaxed text-[#6D7278] mt-3">Set budget limits per category and instantly see how close you are to exceeding or meeting your goals.</p>
             </div>
-
 
             <div className="bg-white rounded-2xl p-[40px_30px] shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition-all hover:-translate-y-1 hover:shadow-[0_8px_16px_rgba(0,0,0,0.12)] hover:bg-[#d1f4e0] cursor-pointer">
               <div className="w-20 h-20 bg-[#d1f4e0] rounded-full mx-auto mb-5 flex items-center justify-center">
@@ -180,7 +174,6 @@ const Home = () => {
         </div>
       </section>
 
-    
       <section className="bg-[#f8f8f8] py-12 md:py-20 px-5 md:px-[10%] text-center font-poppins">
         <h2 className="text-2xl md:text-3xl lg:text-[40px] font-bold mb-8 md:mb-[60px]">
           Simple Steps to <span className="text-[#34A853]">Smarter Spending</span>
@@ -194,7 +187,6 @@ const Home = () => {
             <p className="text-sm leading-[1.5]">Securely log in using your Gmail account or personal credentials.</p>
           </div>
 
-         
           <div className="bg-white rounded-[15px] p-6 md:p-[30px_25px] text-left shadow-[0_4px_10px_rgba(0,0,0,0.1)] w-full max-w-[300px] transition-all hover:-translate-y-1 hover:bg-[#d1f4e0] cursor-pointer lg:col-start-1 lg:row-start-2">
             <div className="bg-[#34A853] text-white w-10 h-10 rounded-full flex items-center justify-center font-bold text-2xl mb-[10px]">2</div>
             <h3 className="text-[22px] text-[#34A853] mb-2">Add Your Expenses</h3>
@@ -205,14 +197,12 @@ const Home = () => {
             <img src={MonitorFront} alt="Trackit App on computer" className="w-[250px] md:w-[320px]" />
           </div>
 
-       
           <div className="bg-white rounded-[15px] p-6 md:p-[30px_25px] text-left shadow-[0_4px_10px_rgba(0,0,0,0.1)] w-full max-w-[300px] transition-all hover:-translate-y-1 hover:bg-[#d1f4e0] cursor-pointer lg:col-start-3 lg:row-start-1">
             <div className="bg-[#34A853] text-white w-10 h-10 rounded-full flex items-center justify-center font-bold text-2xl mb-[10px]">3</div>
             <h3 className="text-[22px] text-[#34A853] mb-2">Set Your Budgets</h3>
             <p className="text-sm leading-[1.5]">Define limits for each category and track your progress in real-time.</p>
           </div>
 
-      
           <div className="bg-white rounded-[15px] p-6 md:p-[30px_25px] text-left shadow-[0_4px_10px_rgba(0,0,0,0.1)] w-full max-w-[300px] transition-all hover:-translate-y-1 hover:bg-[#d1f4e0] cursor-pointer lg:col-start-3 lg:row-start-2">
             <div className="bg-[#34A853] text-white w-10 h-10 rounded-full flex items-center justify-center font-bold text-2xl mb-[10px]">4</div>
             <h3 className="text-[22px] text-[#34A853] mb-2">View AI Insights and Reports</h3>
@@ -221,7 +211,6 @@ const Home = () => {
         </div>
       </section>
 
-  
       <section className="py-12 md:py-16 text-center">
         <div className="max-w-[1200px] mx-auto px-5">
           <div className="w-full max-w-[1200px] bg-[#CCEFCC] rounded-2xl md:rounded-[50px] p-8 md:p-12 lg:p-[60px_50px]">
@@ -306,7 +295,6 @@ const Home = () => {
         </div>
       </section>
 
- 
       <section className="bg-white py-12 md:py-20 px-5 md:px-[30px]">
         <div className="max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-[40%_60%] gap-8 md:gap-12 lg:gap-[60px] items-center">
           <div className="text-center lg:text-left">

@@ -1,6 +1,5 @@
 import nodemailer from "nodemailer";
 
-
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -9,11 +8,9 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-
 export const generateVerificationCode = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
-
 
 export const sendVerificationEmail = async (email, code, type = 'password-reset') => {
   const isRegistration = type === 'registration';

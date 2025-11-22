@@ -196,7 +196,6 @@ const AddCategoryModal = ({ isOpen, onClose, onAddCategory, transactionType }) =
             </div>
           </div>
 
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2 sm:mb-3">
               Icons:

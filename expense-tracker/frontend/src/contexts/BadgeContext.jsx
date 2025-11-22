@@ -172,6 +172,26 @@ export const BadgeProvider = ({ children }) => {
   const [currentBadge, setCurrentBadge] = useState(null);
   const [badgeQueue, setBadgeQueue] = useState([]);
   const [userEmail, setUserEmail] = useState('');
+  const [isAuthPage, setIsAuthPage] = useState(false);
+
+  useEffect(() => {
+    const checkAuthPage = () => {
+      const path = window.location.pathname;
+      const authPages = ['/', '/login', '/register', '/about'];
+      return authPages.includes(path);
+    };
+
+    setIsAuthPage(checkAuthPage());
+
+    const handleRouteChange = (event) => {
+      const newPath = event.detail?.pathname || window.location.pathname;
+      const authPages = ['/', '/login', '/register', '/about'];
+      setIsAuthPage(authPages.includes(newPath));
+    };
+
+    window.addEventListener('routeChange', handleRouteChange);
+    return () => window.removeEventListener('routeChange', handleRouteChange);
+  }, []);
 
   useEffect(() => {
     const getUserEmail = () => {
@@ -183,6 +203,9 @@ export const BadgeProvider = ({ children }) => {
 
     const handleUserChange = () => {
       setUserEmail(getUserEmail());
+      const path = window.location.pathname;
+      const authPages = ['/', '/login', '/register', '/about'];
+      setIsAuthPage(authPages.includes(path));
     };
 
     window.addEventListener('userStorageChange', handleUserChange);
@@ -190,7 +213,7 @@ export const BadgeProvider = ({ children }) => {
   }, []);
 
   const checkForNewBadges = useCallback(async () => {
-    if (!userEmail) return;
+    if (!userEmail || isAuthPage) return;
 
     await checkBudgetCompletions(userEmail);
 
@@ -199,7 +222,7 @@ export const BadgeProvider = ({ children }) => {
     if (newBadges.length > 0) {
       setBadgeQueue(prev => [...prev, ...newBadges]);
     }
-  }, [userEmail]);
+  }, [userEmail, isAuthPage]);
 
   useEffect(() => {
     if (!currentBadge && badgeQueue.length > 0) {
@@ -219,6 +242,13 @@ export const BadgeProvider = ({ children }) => {
   const handleBadgeClose = () => {
     setCurrentBadge(null);
   };
+
+  useEffect(() => {
+    if (isAuthPage) {
+      setCurrentBadge(null);
+      setBadgeQueue([]);
+    }
+  }, [isAuthPage]);
 
   useEffect(() => {
     const checkBadgesHandler = () => {
@@ -244,7 +274,7 @@ export const BadgeProvider = ({ children }) => {
   return (
     <BadgeContext.Provider value={{ checkForNewBadges }}>
       {children}
-      {currentBadge && (
+      {currentBadge && !isAuthPage && (
         <BadgeUnlockNotification
           badge={currentBadge}
           onClose={handleBadgeClose}

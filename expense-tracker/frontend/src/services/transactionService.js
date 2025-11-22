@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://localhost:5000";
+const API_BASE_URL = "http:
 
 const getUserEmail = () => {
   try {
@@ -24,7 +24,7 @@ const getHeaders = () => {
 export const getTransactions = async (filters = {}) => {
   try {
     const queryParams = new URLSearchParams();
-    
+
     if (filters.type && filters.type !== "all") {
       queryParams.append("type", filters.type);
     }
@@ -39,14 +39,14 @@ export const getTransactions = async (filters = {}) => {
     }
 
     const url = `${API_BASE_URL}/transactions${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
-    
+
     const response = await fetch(url, {
       method: "GET",
       headers: getHeaders()
     });
 
     const data = await response.json();
-    
+
     if (!response.ok) {
       throw new Error(data.message || "Failed to fetch transactions");
     }
@@ -61,7 +61,7 @@ export const getTransactions = async (filters = {}) => {
 export const getTransactionSummary = async (filters = {}) => {
   try {
     const queryParams = new URLSearchParams();
-    
+
     if (filters.startDate) {
       queryParams.append("startDate", filters.startDate);
     }
@@ -70,14 +70,14 @@ export const getTransactionSummary = async (filters = {}) => {
     }
 
     const url = `${API_BASE_URL}/transactions/summary${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
-    
+
     const response = await fetch(url, {
       method: "GET",
       headers: getHeaders()
     });
 
     const data = await response.json();
-    
+
     if (!response.ok) {
       throw new Error(data.message || "Failed to fetch summary");
     }
@@ -98,7 +98,7 @@ export const createTransaction = async (transactionData) => {
     });
 
     const data = await response.json();
-    
+
     if (!response.ok) {
       throw new Error(data.message || "Failed to create transaction");
     }
@@ -119,7 +119,7 @@ export const updateTransaction = async (id, transactionData) => {
     });
 
     const data = await response.json();
-    
+
     if (!response.ok) {
       throw new Error(data.message || "Failed to update transaction");
     }
@@ -139,7 +139,7 @@ export const deleteTransaction = async (id) => {
     });
 
     const data = await response.json();
-    
+
     if (!response.ok) {
       throw new Error(data.message || "Failed to delete transaction");
     }
@@ -159,7 +159,7 @@ export const getTransactionById = async (id) => {
     });
 
     const data = await response.json();
-    
+
     if (!response.ok) {
       throw new Error(data.message || "Failed to fetch transaction");
     }

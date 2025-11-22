@@ -15,7 +15,6 @@ const EmailVerificationModal = ({ isOpen, onClose, email, userData }) => {
   const inputRefs = useRef([]);
   const navigate = useNavigate();
 
-
   const handleChange = (index, value) => {
    
     if (value && !/^\d$/.test(value)) return;
@@ -24,7 +23,6 @@ const EmailVerificationModal = ({ isOpen, onClose, email, userData }) => {
     newCode[index] = value;
     setCode(newCode);
 
-    
     if (value && index < 5) {
       inputRefs.current[index + 1]?.focus();
     }
@@ -66,24 +64,19 @@ const EmailVerificationModal = ({ isOpen, onClose, email, userData }) => {
     setMessage("");
 
     try {
-      const res = await axios.post("http://localhost:5000/users/verify-email", {
+      const res = await axios.post("http:
         email,
         code: verificationCode,
       });
-      
-      
-     
+
       localStorage.setItem("user", JSON.stringify(userData));
       window.dispatchEvent(new Event("userStorageChange"));
-      
-     
+
       setIsLoading(false);
       setMessage("");
-      
-    
+
       setShowSuccessModal(true);
-      
-     
+
       setTimeout(() => {
         setShowSuccessModal(false);
         onClose(); 
@@ -101,7 +94,7 @@ const EmailVerificationModal = ({ isOpen, onClose, email, userData }) => {
     setMessage("");
     
     try {
-      const res = await axios.post("http://localhost:5000/users/resend-verification", {
+      const res = await axios.post("http:
         email,
       });
       
@@ -131,9 +124,7 @@ const EmailVerificationModal = ({ isOpen, onClose, email, userData }) => {
     }
   };
 
-
   if (!isOpen && !showSuccessModal) return null;
-
 
   return (
     <>
@@ -146,7 +137,6 @@ const EmailVerificationModal = ({ isOpen, onClose, email, userData }) => {
         }}
       />
 
- 
       {isOpen && !showSuccessModal && (
         <div
           className="fixed inset-0 bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 font-poppins p-4"
@@ -186,7 +176,6 @@ const EmailVerificationModal = ({ isOpen, onClose, email, userData }) => {
               {email}
             </p>
 
-    
             {message && (
               <div
                 className={`mb-6 p-3 rounded-lg text-sm w-full ${
@@ -199,7 +188,6 @@ const EmailVerificationModal = ({ isOpen, onClose, email, userData }) => {
               </div>
             )}
 
-           
             <form onSubmit={handleSubmit} className="w-full space-y-6">
             
               <div className="flex justify-center gap-2 mb-6">
@@ -220,7 +208,6 @@ const EmailVerificationModal = ({ isOpen, onClose, email, userData }) => {
                 ))}
               </div>
 
-             
               <button
                 type="submit"
                 className="w-full py-3.5 px-6 rounded-xl text-white font-semibold bg-green-500 hover:bg-green-600 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"

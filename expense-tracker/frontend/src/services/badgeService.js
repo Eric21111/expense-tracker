@@ -4,7 +4,7 @@ const checkAndSaveBudgetCompletion = async (userEmail) => {
   const budgets = JSON.parse(localStorage.getItem(`budgets_${userEmail}`) || '[]');
   let transactions = [];
   try {
-    const response = await fetch('http://localhost:5000/transactions', {
+    const response = await fetch('http:
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -108,7 +108,7 @@ export const calculateBadgeProgress = async (badge, userEmail) => {
 
   let transactions = [];
   try {
-    const response = await fetch('http://localhost:5000/transactions', {
+    const response = await fetch('http:
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -218,7 +218,7 @@ export const getBadgeStats = async (userEmail) => {
   }
 
   try {
-    const response = await fetch('http://localhost:5000/api/badges/stats', {
+    const response = await fetch('http:
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -242,7 +242,7 @@ export const checkNewBadges = async (userEmail, badgeDefinitions) => {
   
   let shownBadges = [];
   try {
-    const shownResponse = await fetch('http://localhost:5000/api/badges/shown', {
+    const shownResponse = await fetch('http:
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -264,10 +264,8 @@ export const checkNewBadges = async (userEmail, badgeDefinitions) => {
     const isShown = shownBadges.includes(badge.id);
     
     if (progress.unlocked && !isShown) {
-      newlyUnlocked.push(badge);
-      
       try {
-        await fetch('http://localhost:5000/api/badges/progress', {
+        const progressResponse = await fetch('http:
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -280,6 +278,23 @@ export const checkNewBadges = async (userEmail, badgeDefinitions) => {
             progress: progress
           })
         });
+
+        if (progressResponse.ok) {
+          const markShownResponse = await fetch('http:
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-user-email': userEmail
+            },
+            body: JSON.stringify({ badgeId: badge.id })
+          });
+          
+          if (markShownResponse.ok) {
+            console.log(`Badge ${badge.id} marked as shown for ${userEmail}`);
+          }
+          
+          newlyUnlocked.push(badge);
+        }
       } catch (error) {
         console.error('Error saving badge progress:', error);
       }
@@ -293,7 +308,7 @@ export const markBadgeAsShown = async (userEmail, badgeId) => {
   if (!userEmail || !badgeId) return;
   
   try {
-    await fetch('http://localhost:5000/api/badges/mark-shown', {
+    await fetch('http:
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -318,7 +333,7 @@ export const getAllBadgeProgress = async (userEmail) => {
   if (!userEmail) return {};
   
   try {
-    const response = await fetch('http://localhost:5000/api/badges', {
+    const response = await fetch('http:
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

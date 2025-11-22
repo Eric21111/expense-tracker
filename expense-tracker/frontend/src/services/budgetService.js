@@ -26,7 +26,7 @@ const resetBudgetAmounts = (budgets) => {
   const currentMonthKey = getCurrentMonthKey();
   return budgets.map(budget => ({
     ...budget,
-    amount: 0,
+    
     monthKey: currentMonthKey,
     lastResetDate: new Date().toISOString()
   }));

@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { getTransactions } from "../../services/transactionService";
 import { useCurrency } from "../../contexts/CurrencyContext";
-import { loadBudgetsWithReset } from "../../services/budgetService";
+import { getBudgets } from "../../services/budgetApiService";
 import { Tooltip } from 'react-tooltip';
 import SalaryIcon from "../../assets/categories/salary.svg";
 import GiftIcon from "../../assets/categories/gift.svg";
@@ -154,8 +154,26 @@ const TransactionListCard = ({ refreshTrigger, onDateFilterChange }) => {
         const userEmail = storedUser ? JSON.parse(storedUser).email : null;
         
         if (userEmail) {
-          const loadedBudgets = await loadBudgetsWithReset(userEmail);
-          setBudgets(loadedBudgets || []);
+          const budgetResponse = await getBudgets();
+          console.log('🔍 Budget API response:', budgetResponse);
+          
+          let loadedBudgets = [];
+          if (budgetResponse.success && budgetResponse.budgets) {
+            loadedBudgets = budgetResponse.budgets;
+          } else if (Array.isArray(budgetResponse)) {
+            loadedBudgets = budgetResponse;
+          }
+          
+          console.log('📊 Budgets loaded:', loadedBudgets.length);
+          console.log('📊 Budget details:', loadedBudgets.map(b => ({ 
+            id: b._id, 
+            label: b.label, 
+            name: b.name, 
+            category: b.category 
+          })));
+          setBudgets(loadedBudgets);
+        } else {
+          console.warn('⚠️ No user email found');
         }
         
         const response = await getTransactions({});
@@ -189,6 +207,24 @@ const TransactionListCard = ({ refreshTrigger, onDateFilterChange }) => {
   }, [refreshTrigger]);
 
   useEffect(() => {
+    const handleBudgetUpdate = async () => {
+      const budgetResponse = await getBudgets();
+      if (budgetResponse.success) {
+        console.log('🔄 Budgets refreshed on event');
+        setBudgets(budgetResponse.budgets || []);
+      }
+    };
+
+    window.addEventListener('budgetCreated', handleBudgetUpdate);
+    window.addEventListener('budgetUpdated', handleBudgetUpdate);
+
+    return () => {
+      window.removeEventListener('budgetCreated', handleBudgetUpdate);
+      window.removeEventListener('budgetUpdated', handleBudgetUpdate);
+    };
+  }, []);
+
+  useEffect(() => {
     const dateRange = getDateRange();
     let filtered = allTransactions;
     
@@ -209,7 +245,6 @@ const TransactionListCard = ({ refreshTrigger, onDateFilterChange }) => {
     }
   }, [currentDate, activePeriod, allTransactions, onDateFilterChange]);
 
-  
   const filteredTransactions = useMemo(() => {
     let filtered = [];
     
@@ -239,7 +274,6 @@ const TransactionListCard = ({ refreshTrigger, onDateFilterChange }) => {
     });
   }, [activeTab, transactions]);
 
-  
   const periodTotal = useMemo(() => {
     return filteredTransactions.reduce((sum, t) => sum + t.amount, 0);
   }, [filteredTransactions]);
@@ -270,18 +304,76 @@ const TransactionListCard = ({ refreshTrigger, onDateFilterChange }) => {
     return breakdown;
   }, [filteredTransactions, activeTab]);
   
+  const budgetColors = [
+    '#10B981', 
+    '#3B82F6', 
+    '#8B5CF6', 
+    '#F59E0B', 
+    '#EC4899', 
+    '#14B8A6', 
+    '#F97316', 
+    '#6366F1', 
+  ];
+
+  const getBudgetColor = (budgetId) => {
+    if (!budgetId) return budgetColors[0];
+    const hash = budgetId.split('').reduce((acc, char) => {
+      return char.charCodeAt(0) + ((acc << 5) - acc);
+    }, 0);
+    return budgetColors[Math.abs(hash) % budgetColors.length];
+  };
+
   const getBudgetInfo = (transaction) => {
-    if (!transaction.budgetId) return null;
-    const budget = budgets.find(b => 
-      (b.id && b.id.toString() === transaction.budgetId) || 
-      (b.groupId === transaction.budgetId)
+    if (transaction.budgetId) {
+      const budget = budgets.find(b => 
+        (b.id && b.id.toString() === transaction.budgetId.toString()) || 
+        (b._id && b._id.toString() === transaction.budgetId.toString()) ||
+        (b.groupId === transaction.budgetId)
+      );
+      
+      if (budget) {
+        console.log('✅ Budget found by ID:', { 
+          transactionId: transaction._id,
+          budgetName: budget.label || budget.name,
+          budgetId: budget.id || budget._id
+        });
+        return {
+          name: budget.label || budget.name || null,
+          id: budget.id || budget._id || budget.groupId,
+          color: getBudgetColor(budget.id || budget._id || budget.groupId)
+        };
+      } else {
+        console.log('⚠️ Budget not found by ID:', { 
+          transactionId: transaction._id,
+          budgetId: transaction.budgetId,
+          availableBudgets: budgets.map(b => ({ id: b.id || b._id, label: b.label || b.name }))
+        });
+      }
+    }
+    
+    const matchingBudget = budgets.find(b => 
+      b.category === transaction.category ||
+      (b.category && b.category.includes(' - ') && b.category.startsWith(transaction.category))
     );
     
-    if (!budget) return null;
-    if (budget.groupId) {
-      return budget.name || "Multiple Categories";
+    if (matchingBudget) {
+      console.log('✅ Budget found by category:', { 
+        transactionCategory: transaction.category,
+        budgetName: matchingBudget.label || matchingBudget.name,
+        budgetCategory: matchingBudget.category
+      });
+      return {
+        name: matchingBudget.label || matchingBudget.name || null,
+        id: matchingBudget.id || matchingBudget._id || matchingBudget.groupId,
+        color: getBudgetColor(matchingBudget.id || matchingBudget._id || matchingBudget.groupId)
+      };
     }
-    return budget.description || null;
+    
+    console.log('❌ No budget found:', { 
+      transactionCategory: transaction.category,
+      availableBudgetCategories: budgets.map(b => b.category)
+    });
+    return null;
   }; 
 
   const renderCategoryIcon = (transaction) => {
@@ -347,7 +439,6 @@ const TransactionListCard = ({ refreshTrigger, onDateFilterChange }) => {
           ))}
         </div>
 
-   
         <div className="flex items-center justify-center gap-2 sm:gap-6 mb-3 sm:mb-4">
           <button 
             onClick={handlePreviousPeriod}
@@ -375,7 +466,6 @@ const TransactionListCard = ({ refreshTrigger, onDateFilterChange }) => {
             <FaChevronRight className="text-sm sm:text-base" />
           </button>
         </div>
-
 
         {activeTab !== "All" && categoryBreakdown.length > 0 && (
           <>
@@ -417,7 +507,6 @@ const TransactionListCard = ({ refreshTrigger, onDateFilterChange }) => {
           </>
         )}
 
-
         <p
           className={`text-2xl sm:text-3xl font-bold text-center mt-3 sm:mt-4 ${
            
@@ -430,7 +519,6 @@ const TransactionListCard = ({ refreshTrigger, onDateFilterChange }) => {
         </p>
       </div>
 
-    
       <div className="space-y-3 sm:space-y-4 max-h-80 sm:max-h-96 overflow-y-auto pr-1 sm:pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
         {loading ? (
           <p className="text-center text-gray-500 py-4 text-sm sm:text-base">Loading transactions...</p>
@@ -439,19 +527,34 @@ const TransactionListCard = ({ refreshTrigger, onDateFilterChange }) => {
         ) : (
           filteredTransactions.map((transaction) => {
             const budgetInfo = getBudgetInfo(transaction);
+            
+            const displayCategory = transaction.category.includes(' - ') 
+              ? transaction.category.split(' - ')[1] 
+              : transaction.category;
+            
             return (
               <div key={transaction._id} className="flex items-center justify-between p-2.5 sm:p-3 bg-gray-50 rounded-lg shadow-sm hover:bg-gray-100 transition-colors">
                 <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
                   {renderCategoryIcon(transaction)}
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm sm:text-base text-gray-800 truncate">
-                      {transaction.category}
-                      {budgetInfo && (
-                        <span className="text-xs text-gray-500 ml-1 sm:ml-2 hidden sm:inline">({budgetInfo})</span>
-                      )}
-                    </p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-semibold text-sm sm:text-base text-gray-800">
+                        {displayCategory}
+                        {budgetInfo && budgetInfo.name && (
+                          <span 
+                            className="text-xs px-2 py-0.5 rounded-full font-medium"
+                            style={{ 
+                              backgroundColor: `${budgetInfo.color}20`,
+                              color: budgetInfo.color
+                            }}
+                          >
+                            ({budgetInfo.name})
+                          </span>
+                        )}
+                      </p>
+                    </div>
                     {transaction.description && (
-                      <p className="text-xs sm:text-sm text-gray-500 truncate">{transaction.description}</p>
+                      <p className="text-xs sm:text-sm text-gray-500 truncate mt-0.5">{transaction.description}</p>
                     )}
                   </div>
                 </div>

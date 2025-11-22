@@ -18,7 +18,7 @@ const AccountsList = ({
       ) : (
         accounts.map((account) => (
           <AccountCard
-            key={account.id}
+            key={account.id || account._id}
             account={account}
             getIconComponent={getIconComponent}
             onToggle={onToggle}

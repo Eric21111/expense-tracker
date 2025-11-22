@@ -21,7 +21,6 @@ const VerifyCodeModal = ({ isOpen, onClose, email, onBack }) => {
     newCode[index] = value;
     setCode(newCode);
 
-  
     if (value && index < 5) {
       inputRefs.current[index + 1]?.focus();
     }
@@ -63,7 +62,7 @@ const VerifyCodeModal = ({ isOpen, onClose, email, onBack }) => {
     setMessage("");
 
     try {
-      const res = await axios.post("http://localhost:5000/users/verify-code", {
+      const res = await axios.post("http:
         email,
         code: verificationCode,
       });
@@ -71,7 +70,6 @@ const VerifyCodeModal = ({ isOpen, onClose, email, onBack }) => {
       setMessage(res.data.message || "Code verified successfully!");
       setMessageType("success");
       setVerifiedCode(verificationCode);
-      
 
       setTimeout(() => {
         setShowResetPasswordModal(true);
@@ -93,7 +91,6 @@ const VerifyCodeModal = ({ isOpen, onClose, email, onBack }) => {
     onClose();
   };
 
- 
   if (showResetPasswordModal) {
     return (
       <ResetPasswordModal
@@ -124,7 +121,6 @@ const VerifyCodeModal = ({ isOpen, onClose, email, onBack }) => {
           <FaArrowLeft size={24} />
         </button>
 
-
         <button
           onClick={handleClose}
           className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition-colors"
@@ -142,19 +138,16 @@ const VerifyCodeModal = ({ isOpen, onClose, email, onBack }) => {
             />
           </div>
 
-  
           <h2 className="text-3xl font-bold text-gray-900 mb-3">
             Enter 6-Digit
             <br />
             Verification Code
           </h2>
 
-     
           <p className="text-gray-500 mb-8 max-w-sm">
             We have sent a verification code to your registered email address
           </p>
 
-   
           {message && (
             <div
               className={`mb-6 p-3 rounded-lg text-sm w-full ${
@@ -167,7 +160,6 @@ const VerifyCodeModal = ({ isOpen, onClose, email, onBack }) => {
             </div>
           )}
 
-    
           <form onSubmit={handleSubmit} className="w-full space-y-6">
     
             <div className="flex justify-center gap-2 mb-6">
@@ -187,7 +179,6 @@ const VerifyCodeModal = ({ isOpen, onClose, email, onBack }) => {
               ))}
             </div>
 
-   
             <button
               type="submit"
               className="w-full py-3.5 px-6 rounded-xl text-white font-semibold bg-green-500 hover:bg-green-600 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"

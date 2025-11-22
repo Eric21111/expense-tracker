@@ -10,8 +10,7 @@ const DeleteSuccessModal = ({ isOpen, onClose }) => {
  
       setShowCheck(false);
       setShowText(false);
-      
-    
+
       setTimeout(() => setShowCheck(true), 100);
       
       setTimeout(() => setShowText(true), 400);
@@ -87,7 +86,6 @@ const DeleteSuccessModal = ({ isOpen, onClose }) => {
             )}
           </div>
 
-      
           <h2 
             className={`text-3xl font-bold text-gray-900 mb-2 transition-all duration-500 ${
               showText 

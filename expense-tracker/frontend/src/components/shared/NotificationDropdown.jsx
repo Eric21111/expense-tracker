@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FaBell, FaCheckCircle, FaTrash, FaCog } from 'react-icons/fa';
-import { 
-  getStoredNotifications, 
-  markNotificationAsRead, 
+import {
+  getStoredNotifications,
+  markNotificationAsRead,
   markAllNotificationsAsRead,
   clearAllNotifications,
   getUnreadNotificationCount,
-  dismissAlert 
+  dismissAlert
 } from '../../services/notificationService';
 
 const NotificationDropdown = ({ userEmail }) => {
@@ -18,14 +18,18 @@ const NotificationDropdown = ({ userEmail }) => {
 
   const checkExpenseLimitSetting = () => {
     try {
-      const storedUser = localStorage.getItem("user");
-      let email = userEmail || localStorage.getItem('userEmail');
-      
-      if (!email && storedUser) {
-        const user = JSON.parse(storedUser);
-        email = user.email;
+      let email = userEmail;
+
+      if (!email) {
+        const storedUser = localStorage.getItem("user");
+        if (storedUser) {
+          const user = JSON.parse(storedUser);
+          email = user.email;
+        } else {
+          email = localStorage.getItem('userEmail');
+        }
       }
-      
+
       if (email) {
         const settings = localStorage.getItem(`notificationSettings_${email}`);
         if (settings) {
@@ -40,18 +44,30 @@ const NotificationDropdown = ({ userEmail }) => {
     }
   };
 
-  const loadNotifications = () => {
-    const storedNotifications = getStoredNotifications();
+  const loadNotifications = async () => {
+    const storedNotifications = await getStoredNotifications(userEmail);
     setNotifications(storedNotifications);
-    setUnreadCount(getUnreadNotificationCount());
+    const count = await getUnreadNotificationCount(userEmail);
+    setUnreadCount(count);
     setExpenseLimitEnabled(checkExpenseLimitSetting());
   };
 
   useEffect(() => {
     loadNotifications();
     const interval = setInterval(loadNotifications, 5000);
-    return () => clearInterval(interval);
-  }, []);
+    
+    const handleNotificationsUpdate = () => {
+      console.log('🔔 Notifications update event received - refreshing...');
+      loadNotifications();
+    };
+    
+    window.addEventListener('notificationsUpdated', handleNotificationsUpdate);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('notificationsUpdated', handleNotificationsUpdate);
+    };
+  }, [userEmail]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -64,33 +80,33 @@ const NotificationDropdown = ({ userEmail }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleNotificationClick = (notificationId) => {
-    markNotificationAsRead(notificationId);
+  const handleNotificationClick = async (notificationId) => {
+    await markNotificationAsRead(notificationId, userEmail);
     loadNotifications();
   };
 
-  const handleDismissNotification = (notification) => {
+  const handleDismissNotification = async (notification) => {
     if (notification.category && notification.type && notification.percentage) {
       dismissAlert(notification.category, notification.type, notification.percentage);
     }
-    markNotificationAsRead(notification.id);
+    await markNotificationAsRead(notification._id || notification.id, userEmail);
     loadNotifications();
   };
 
-  const handleMarkAllAsRead = () => {
-    markAllNotificationsAsRead();
+  const handleMarkAllAsRead = async () => {
+    await markAllNotificationsAsRead(userEmail);
     loadNotifications();
   };
 
-  const handleClearAll = () => {
-    const currentNotifications = getStoredNotifications();
+  const handleClearAll = async () => {
+    const currentNotifications = await getStoredNotifications(userEmail);
     currentNotifications.forEach(notification => {
       if (notification.category && notification.type && notification.percentage) {
         dismissAlert(notification.category, notification.type, notification.percentage);
       }
     });
-    
-    clearAllNotifications();
+
+    await clearAllNotifications(userEmail);
     loadNotifications();
   };
 
@@ -98,13 +114,13 @@ const NotificationDropdown = ({ userEmail }) => {
     const now = new Date();
     const notificationTime = new Date(timestamp);
     const diffInMinutes = Math.floor((now - notificationTime) / (1000 * 60));
-    
+
     if (diffInMinutes < 1) return 'Just now';
     if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-    
+
     const diffInHours = Math.floor(diffInMinutes / 60);
     if (diffInHours < 24) return `${diffInHours}h ago`;
-    
+
     const diffInDays = Math.floor(diffInHours / 24);
     return `${diffInDays}d ago`;
   };
@@ -135,12 +151,12 @@ const NotificationDropdown = ({ userEmail }) => {
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <button 
+      <button
         onClick={() => setIsOpen(!isOpen)}
         className="relative w-9 h-9 sm:w-10 sm:h-10 bg-white rounded-full flex items-center justify-center shadow-md hover:bg-gray-50 transition"
       >
         <FaBell className="text-gray-700 text-base sm:text-lg" />
-        
+
         {unreadCount > 0 && (
           <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center font-bold">
             {unreadCount > 99 ? '99+' : unreadCount}
@@ -196,11 +212,10 @@ const NotificationDropdown = ({ userEmail }) => {
             ) : (
               notifications.map((notification) => (
                 <div
-                  key={notification.id}
+                  key={notification._id || notification.id}
                   onClick={() => handleDismissNotification(notification)}
-                  className={`p-3 sm:p-4 border-l-4 cursor-pointer hover:bg-gray-50 transition ${
-                    getNotificationColor(notification.type)
-                  } ${!notification.read ? 'font-medium' : 'opacity-75'}`}
+                  className={`p-3 sm:p-4 border-l-4 cursor-pointer hover:bg-gray-50 transition ${getNotificationColor(notification.type)
+                    } ${!notification.read ? 'font-medium' : 'opacity-75'}`}
                 >
                   <div className="flex items-start gap-2 sm:gap-3">
                     <span className="text-base sm:text-lg flex-shrink-0 mt-0.5 sm:mt-1">

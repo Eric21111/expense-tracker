@@ -7,15 +7,15 @@ const StatCard = ({ icon, value, title, subtitle, iconColor, titleColor }) => {
       style={{ borderRadius: "20px" }}
     >
       <div className="flex items-center justify-between">
-        <div className="flex-1 min-w-0">
-          <p className="text-lg sm:text-2xl font-bold text-gray-800 truncate">{value}</p>
+        <div className="flex-1 min-w-0 pr-2">
+          <p className="text-lg sm:text-2xl font-bold text-gray-800">{value}</p>
           <p
-            className="text-xs sm:text-sm mt-1 font-medium truncate"
+            className="text-xs sm:text-sm mt-1 font-medium leading-tight"
             style={{ color: titleColor || "#6B7281" }}
           >
             {title}
           </p>
-          <p className="text-xs text-gray-400 truncate">{subtitle}</p>
+          <p className="text-xs text-gray-400 leading-tight">{subtitle}</p>
         </div>
 
         <div

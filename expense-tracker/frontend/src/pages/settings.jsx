@@ -3,7 +3,9 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Sidebar from "../components/shared/Sidebar";
 import DeleteAccountModal from "../components/DeleteAccountModal";
+import ResetDataModal from "../components/ResetDataModal";
 import DeleteSuccessModal from "../components/DeleteSuccessModal";
+import { resetCompleteTour, resetDashboardTour, checkAndStartTour } from "../utils/tutorial";
 import { getAuth, signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
 import app from "../firebaseConfig";
 import { useSidebar } from "../contexts/SidebarContext";
@@ -86,7 +88,7 @@ const Settings = () => {
           photoURL: user.photoURL || "",
           role: user.role || "User"
         });
-        
+
         setFormData(prev => ({
           ...prev,
           fullName: user.name || user.fullName || user.displayName || "",
@@ -100,10 +102,14 @@ const Settings = () => {
     }
   };
 
+  useEffect(() => {
+    checkAndStartTour();
+  }, []);
+
   const loadNotificationSettings = () => {
     const storedUser = localStorage.getItem("user");
     let userEmail = localStorage.getItem('userEmail');
-    
+
     if (!userEmail && storedUser) {
       try {
         const user = JSON.parse(storedUser);
@@ -112,7 +118,7 @@ const Settings = () => {
         console.error("Error parsing user data:", e);
       }
     }
-    
+
     if (userEmail) {
       const savedSettings = localStorage.getItem(`notificationSettings_${userEmail}`);
       if (savedSettings) {
@@ -137,7 +143,7 @@ const Settings = () => {
           (provider) => provider.providerId === "google.com"
         );
         setIsGoogleUser(isGoogle);
-        
+
         setUserData(prev => ({
           ...prev,
           fullName: user.displayName || prev.fullName,
@@ -168,7 +174,7 @@ const Settings = () => {
       ...prev,
       [name]: value,
     }));
-    
+
     if (name === 'currency') {
       updateCurrency(value);
     }
@@ -180,18 +186,18 @@ const Settings = () => {
         ...prev,
         [type]: !prev[type],
       };
-      
+
       const userEmail = localStorage.getItem('userEmail') || userData.email;
       if (userEmail) {
         localStorage.setItem(`notificationSettings_${userEmail}`, JSON.stringify(newNotifications));
-        
+
         if (type === 'expenseLimit' && !newNotifications.expenseLimit) {
           localStorage.removeItem(`budgetAlerts_${userEmail}`);
           localStorage.removeItem(`dismissedAlerts_${userEmail}`);
           localStorage.removeItem('budget_notifications');
         }
       }
-      
+
       return newNotifications;
     });
   };
@@ -217,7 +223,7 @@ const Settings = () => {
       hasNumber: /\d/.test(password),
       hasSpecial: /[!@#$%^&*(),.?":{}|<>]/.test(password)
     };
-    
+
     return {
       isValid: Object.values(requirements).every(req => req),
       requirements
@@ -232,18 +238,18 @@ const Settings = () => {
         navigate("/login");
         return;
       }
-      
+
       const user = JSON.parse(storedUser);
       setVerificationEmail(user.email);
-      
-      const res = await axios.post("http://localhost:5000/users/send-password-change-code", {
+
+      const res = await axios.post("http:
         email: user.email
       });
-      
+
       if (res.data.debugCode) {
         console.log("Verification code for testing:", res.data.debugCode);
       }
-      
+
       setShowVerificationModal(true);
     } catch (error) {
       console.error("Error sending verification code:", error);
@@ -297,11 +303,11 @@ const Settings = () => {
     }
 
     setIsUpdatingPassword(true);
-    
+
     try {
       const auth = getAuth(app);
       const user = auth.currentUser;
-      
+
       if (!user) {
         if (!isEmailVerified) {
           setPasswordErrors(prev => ({
@@ -311,23 +317,23 @@ const Settings = () => {
           handleSendVerificationCode();
           return;
         }
-        
+
         try {
           const storedUser = localStorage.getItem("user");
           const userData = JSON.parse(storedUser);
-          
-          const res = await axios.post("http://localhost:5000/users/change-password", {
+
+          const res = await axios.post("http:
             email: userData.email,
             currentPassword: passwordData.currentPassword,
             newPassword: passwordData.newPassword
           });
-          
+
           setPasswordData({
             currentPassword: "",
             newPassword: "",
             confirmPassword: ""
           });
-          
+
           setIsEmailVerified(false);
           setShowPasswordSuccessModal(true);
           return;
@@ -347,22 +353,22 @@ const Settings = () => {
         user.email,
         passwordData.currentPassword
       );
-      
+
       await reauthenticateWithCredential(user, credential);
-      
+
       await updatePassword(user, passwordData.newPassword);
-      
+
       setPasswordData({
         currentPassword: "",
         newPassword: "",
         confirmPassword: ""
       });
-      
+
       setShowPasswordSuccessModal(true);
-      
+
     } catch (error) {
       console.error("Password update error:", error);
-      
+
       if (error.code === 'auth/wrong-password') {
         setPasswordErrors(prev => ({
           ...prev,
@@ -412,17 +418,16 @@ const Settings = () => {
         return;
       }
 
-      const response = await axios.post("http://localhost:5000/users/delete", {
+      const response = await axios.post("http:
         email: email
       });
 
       clearAllUserData(email);
-      
+
       const auth = getAuth(app);
       if (auth.currentUser) {
         await signOut(auth);
       }
-      
 
       const handleLogout = async () => {
         const auth = getAuth(app);
@@ -445,7 +450,7 @@ const Settings = () => {
 
       setShowDeleteModal(false);
       setShowDeleteSuccessModal(true);
-      
+
       setTimeout(() => {
         navigate("/login");
       }, 2000);
@@ -459,6 +464,48 @@ const Settings = () => {
     }
   };
 
+  const [showResetDataModal, setShowResetDataModal] = useState(false);
+  const [showResetSuccessModal, setShowResetSuccessModal] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
+
+  const handleResetData = () => {
+    setShowResetDataModal(true);
+  };
+
+  const confirmResetData = async () => {
+    setIsResetting(true);
+    try {
+      const storedUser = localStorage.getItem("user");
+      if (!storedUser) return;
+
+      const userData = JSON.parse(storedUser);
+      const email = userData.email;
+
+      console.log('🔄 Starting data reset for:', email);
+
+      const response = await axios.post("http:
+        email: email
+      });
+
+      console.log('✅ Backend reset response:', response.data);
+      console.log('📊 Deleted budgets:', response.data.deletedBudgets);
+
+      console.log('🧹 Clearing localStorage...');
+      clearAllUserData(email);
+
+      localStorage.setItem("user", storedUser);
+      localStorage.setItem("userEmail", email);
+
+      setShowResetDataModal(false);
+      setShowResetSuccessModal(true);
+
+    } catch (error) {
+      console.error("Reset data error:", error);
+      alert("Failed to reset data. Please try again.");
+    } finally {
+      setIsResetting(false);
+    }
+  };
 
   const handleEditUsername = () => {
     setIsEditingUsername(true);
@@ -474,15 +521,15 @@ const Settings = () => {
     try {
       const storedUser = localStorage.getItem("user");
       const user = JSON.parse(storedUser);
-      
-      const res = await axios.post("http://localhost:5000/users/update-username", {
+
+      const res = await axios.post("http:
         email: user.email,
         newUsername: newUsername.trim()
       });
 
       const updatedUser = { ...user, name: newUsername.trim() };
       localStorage.setItem("user", JSON.stringify(updatedUser));
-      
+
       setUserData(prev => ({
         ...prev,
         fullName: newUsername.trim()
@@ -490,7 +537,7 @@ const Settings = () => {
 
       setIsEditingUsername(false);
       setShowUsernameSuccessModal(true);
-      
+
       window.dispatchEvent(new Event("userStorageChange"));
     } catch (error) {
       console.error("Error updating username:", error);
@@ -515,12 +562,12 @@ const Settings = () => {
         alert("Photo size must be less than 5MB");
         return;
       }
-      
+
       if (!file.type.startsWith('image/')) {
         alert("Please select a valid image file");
         return;
       }
-      
+
       setSelectedPhoto(file);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -540,12 +587,12 @@ const Settings = () => {
     try {
       const storedUser = localStorage.getItem("user");
       const user = JSON.parse(storedUser);
-      
+
       const formData = new FormData();
       formData.append('email', user.email);
       formData.append('photo', selectedPhoto);
-      
-      const res = await axios.post("http://localhost:5000/users/update-photo", formData, {
+
+      const res = await axios.post("http:
         headers: {
           'Content-Type': 'multipart/form-data'
         }
@@ -553,7 +600,7 @@ const Settings = () => {
 
       const updatedUser = { ...user, photoURL: res.data.photoURL };
       localStorage.setItem("user", JSON.stringify(updatedUser));
-      
+
       setUserData(prev => ({
         ...prev,
         photoURL: res.data.photoURL
@@ -563,7 +610,7 @@ const Settings = () => {
       setSelectedPhoto(null);
       setPhotoPreview("");
       setShowPhotoSuccessModal(true);
-      
+
       window.dispatchEvent(new Event("userStorageChange"));
     } catch (error) {
       console.error("Error updating photo:", error);
@@ -584,7 +631,7 @@ const Settings = () => {
     if (prevView !== view) {
       setDashboardView(view);
       localStorage.setItem("dashboardView", view);
-      
+
       window.dispatchEvent(new CustomEvent("dashboardViewChange", { detail: view }));
     }
   };
@@ -603,7 +650,7 @@ const Settings = () => {
               >
                 <HiMenuAlt2 className="text-2xl text-gray-700" />
               </button>
-              
+
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800">Settings</h1>
             </div>
             <div className="inline-flex items-center bg-green-100 text-green-800 text-xs sm:text-sm font-medium px-2.5 sm:px-3 py-1 rounded-full">
@@ -615,15 +662,15 @@ const Settings = () => {
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 lg:gap-8">
               <div className="relative flex-shrink-0">
                 {(isEditingPhoto && photoPreview) ? (
-                  <img 
-                    src={photoPreview} 
-                    alt="Preview" 
+                  <img
+                    src={photoPreview}
+                    alt="Preview"
                     className="w-24 h-24 sm:w-28 sm:h-28 lg:w-32 lg:h-32 rounded-full object-cover border-4 border-green-500"
                   />
                 ) : userData.photoURL ? (
-                  <img 
-                    src={userData.photoURL} 
-                    alt="Profile" 
+                  <img
+                    src={userData.photoURL}
+                    alt="Profile"
                     className="w-24 h-24 sm:w-28 sm:h-28 lg:w-32 lg:h-32 rounded-full object-cover"
                   />
                 ) : (
@@ -633,9 +680,9 @@ const Settings = () => {
                 )}
                 {isEditingPhoto && (
                   <label className="absolute bottom-0 right-0 bg-green-600 hover:bg-green-700 text-white rounded-full p-2 cursor-pointer shadow-lg transition-colors">
-                    <input 
-                      type="file" 
-                      accept="image/*" 
+                    <input
+                      type="file"
+                      accept="image/*"
                       onChange={handlePhotoFileChange}
                       className="hidden"
                     />
@@ -667,14 +714,14 @@ const Settings = () => {
                 <p className="text-gray-500 text-sm sm:text-base mb-3 sm:mb-4">{userData.role}</p>
                 {isEditingUsername ? (
                   <div className="flex gap-2 justify-center sm:justify-start">
-                    <button 
+                    <button
                       onClick={handleSaveUsername}
                       disabled={isSavingUsername}
                       className="bg-green-600 hover:bg-green-700 text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg text-sm sm:text-base font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isSavingUsername ? "Saving..." : "Save"}
                     </button>
-                    <button 
+                    <button
                       onClick={handleCancelEditUsername}
                       disabled={isSavingUsername}
                       className="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg text-sm sm:text-base font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -684,28 +731,27 @@ const Settings = () => {
                   </div>
                 ) : (
                   <div className="flex gap-2 justify-center sm:justify-start">
-                      <button 
-                        onClick={handleEditUsername}
-                        disabled={isGoogleUser}
-                        className={`px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg text-sm sm:text-base font-medium transition-colors ${
-                          isGoogleUser 
-                            ? 'bg-gray-400 cursor-not-allowed opacity-60' 
-                            : 'bg-green-600 hover:bg-green-700'
+                    <button
+                      onClick={handleEditUsername}
+                      disabled={isGoogleUser}
+                      className={`px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg text-sm sm:text-base font-medium transition-colors ${isGoogleUser
+                        ? 'bg-gray-400 cursor-not-allowed opacity-60'
+                        : 'bg-green-600 hover:bg-green-700'
                         } text-white`}
-                        title={isGoogleUser ? "Google account users must change name via Google Account settings" : ""}
-                      >
-                        Change Name
-                      </button>
+                      title={isGoogleUser ? "Google account users must change name via Google Account settings" : ""}
+                    >
+                      Change Name
+                    </button>
                     {isEditingPhoto ? (
                       <>
-                        <button 
+                        <button
                           onClick={handleSavePhoto}
                           disabled={isSavingPhoto || !selectedPhoto}
                           className="bg-blue-600 hover:bg-blue-700 text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg text-sm sm:text-base font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {isSavingPhoto ? "Saving..." : "Save Photo"}
                         </button>
-                        <button 
+                        <button
                           onClick={handleCancelEditPhoto}
                           disabled={isSavingPhoto}
                           className="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg text-sm sm:text-base font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -714,14 +760,13 @@ const Settings = () => {
                         </button>
                       </>
                     ) : (
-                      <button 
+                      <button
                         onClick={handleEditPhoto}
                         disabled={isGoogleUser}
-                        className={`px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg text-sm sm:text-base font-medium transition-colors ${
-                          isGoogleUser 
-                            ? 'bg-gray-400 cursor-not-allowed opacity-60' 
-                            : 'bg-blue-600 hover:bg-blue-700'
-                        } text-white`}
+                        className={`px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg text-sm sm:text-base font-medium transition-colors ${isGoogleUser
+                          ? 'bg-gray-400 cursor-not-allowed opacity-60'
+                          : 'bg-blue-600 hover:bg-blue-700'
+                          } text-white`}
                         title={isGoogleUser ? "Google account users must change photo via Google Account settings" : ""}
                       >
                         Change Photo
@@ -741,7 +786,7 @@ const Settings = () => {
                 </div>
                 <h3 className="text-base sm:text-lg font-semibold text-gray-800">Financial Preferences</h3>
               </div>
-              
+
               <div className="space-y-3 sm:space-y-4">
                 <div>
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Default Currency</label>
@@ -755,44 +800,85 @@ const Settings = () => {
                     <option value="USD">$ USD - US Dollar</option>
                   </select>
                 </div>
-                
+
                 <div>
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Default Dashboard View</label>
                   <div className="flex gap-1.5 sm:gap-2">
                     <button
                       type="button"
                       onClick={() => handleDashboardViewChange("Daily")}
-                      className={`flex-1 py-1.5 sm:py-2 px-2 sm:px-3 text-xs sm:text-sm font-medium rounded-lg transition-colors ${
-                        dashboardView === "Daily"
-                          ? "bg-green-600 text-white"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      }`}
+                      className={`flex-1 py-1.5 sm:py-2 px-2 sm:px-3 text-xs sm:text-sm font-medium rounded-lg transition-colors ${dashboardView === "Daily"
+                        ? "bg-green-600 text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        }`}
                     >
                       Daily
                     </button>
                     <button
                       type="button"
                       onClick={() => handleDashboardViewChange("Weekly")}
-                      className={`flex-1 py-1.5 sm:py-2 px-2 sm:px-3 text-xs sm:text-sm font-medium rounded-lg transition-colors ${
-                        dashboardView === "Weekly"
-                          ? "bg-green-600 text-white"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      }`}
+                      className={`flex-1 py-1.5 sm:py-2 px-2 sm:px-3 text-xs sm:text-sm font-medium rounded-lg transition-colors ${dashboardView === "Weekly"
+                        ? "bg-green-600 text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        }`}
                     >
                       Weekly
                     </button>
                     <button
                       type="button"
                       onClick={() => handleDashboardViewChange("Monthly")}
-                      className={`flex-1 py-1.5 sm:py-2 px-2 sm:px-3 text-xs sm:text-sm font-medium rounded-lg transition-colors ${
-                        dashboardView === "Monthly"
-                          ? "bg-green-600 text-white"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      }`}
+                      className={`flex-1 py-1.5 sm:py-2 px-2 sm:px-3 text-xs sm:text-sm font-medium rounded-lg transition-colors ${dashboardView === "Monthly"
+                        ? "bg-green-600 text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        }`}
                     >
                       Monthly
                     </button>
                   </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
+              <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <span className="text-purple-600 text-base sm:text-lg">🎓</span>
+                </div>
+                <h3 className="text-base sm:text-lg font-semibold text-gray-800">Tutorial</h3>
+              </div>
+
+              <div className="space-y-3 sm:space-y-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-gray-800 text-sm sm:text-base">Complete System Tour</div>
+                    <div className="text-xs sm:text-sm text-gray-500">Learn the complete workflow: Accounts → Budgets → Transactions</div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      resetCompleteTour();
+                    }}
+                    className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors flex-shrink-0"
+                  >
+                    Start Tour
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-gray-800 text-sm sm:text-base">Dashboard Quick Tour</div>
+                    <div className="text-xs sm:text-sm text-gray-500">Quick overview of dashboard features only</div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      resetDashboardTour();
+                      window.location.href = '/dashboard';
+                    }}
+                    className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg bg-purple-600 text-white hover:bg-purple-700 transition-colors flex-shrink-0"
+                  >
+                    Quick Tour
+                  </button>
                 </div>
               </div>
             </div>
@@ -804,7 +890,7 @@ const Settings = () => {
                 </div>
                 <h3 className="text-base sm:text-lg font-semibold text-gray-800">Notifications</h3>
               </div>
-              
+
               <div className="space-y-3 sm:space-y-4">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex-1 min-w-0">
@@ -864,7 +950,7 @@ const Settings = () => {
               </div>
               <h3 className="text-base sm:text-lg font-semibold text-gray-800">Password</h3>
             </div>
-            
+
             {isGoogleUser ? (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4 mb-4">
                 <div className="flex items-start gap-2 sm:gap-3">
@@ -874,9 +960,9 @@ const Settings = () => {
                     <p className="text-blue-700 text-xs sm:text-sm">
                       You are logged in with a Google account. Password changes must be made through your Google Account settings.
                     </p>
-                    <a 
-                      href="https://myaccount.google.com/security" 
-                      target="_blank" 
+                    <a
+                      href="https:
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-600 hover:text-blue-700 underline text-xs sm:text-sm mt-2 inline-block"
                     >
@@ -888,11 +974,11 @@ const Settings = () => {
             ) : (
               <>
                 <p className="text-gray-500 text-xs sm:text-sm mb-3 sm:mb-4">
-                  {isEmailVerified 
-                    ? "Email verified ✅ You can now change your password." 
+                  {isEmailVerified
+                    ? "Email verified ✅ You can now change your password."
                     : "Please verify your email before changing your password."}
                 </p>
-                
+
                 {!isEmailVerified && (
                   <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
                     <div className="flex items-start gap-2 sm:gap-3">
@@ -912,7 +998,7 @@ const Settings = () => {
                     </div>
                   </div>
                 )}
-                
+
                 {passwordErrors.general && (
                   <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
                     <p className="text-red-600 text-xs sm:text-sm">{passwordErrors.general}</p>
@@ -920,7 +1006,7 @@ const Settings = () => {
                 )}
               </>
             )}
-            
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
               <div className="space-y-3 sm:space-y-4">
                 <div>
@@ -932,15 +1018,14 @@ const Settings = () => {
                     onChange={handlePasswordInputChange}
                     placeholder="Current Password"
                     disabled={isGoogleUser}
-                    className={`w-full px-2.5 sm:px-3 py-2 text-sm sm:text-base border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
-                      passwordErrors.currentPassword ? 'border-red-500' : 'border-gray-300'
-                    } ${isGoogleUser ? 'bg-gray-100 cursor-not-allowed' : 'bg-gray-50'}`}
+                    className={`w-full px-2.5 sm:px-3 py-2 text-sm sm:text-base border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${passwordErrors.currentPassword ? 'border-red-500' : 'border-gray-300'
+                      } ${isGoogleUser ? 'bg-gray-100 cursor-not-allowed' : 'bg-gray-50'}`}
                   />
                   {passwordErrors.currentPassword && (
                     <p className="text-red-500 text-xs mt-1">{passwordErrors.currentPassword}</p>
                   )}
                 </div>
-                
+
                 <div>
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">New Password</label>
                   <input
@@ -950,15 +1035,14 @@ const Settings = () => {
                     onChange={handlePasswordInputChange}
                     placeholder="Enter your new Password"
                     disabled={isGoogleUser}
-                    className={`w-full px-2.5 sm:px-3 py-2 text-sm sm:text-base border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
-                      passwordErrors.newPassword ? 'border-red-500' : 'border-gray-300'
-                    } ${isGoogleUser ? 'bg-gray-100 cursor-not-allowed' : 'bg-gray-50'}`}
+                    className={`w-full px-2.5 sm:px-3 py-2 text-sm sm:text-base border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${passwordErrors.newPassword ? 'border-red-500' : 'border-gray-300'
+                      } ${isGoogleUser ? 'bg-gray-100 cursor-not-allowed' : 'bg-gray-50'}`}
                   />
                   {passwordErrors.newPassword && (
                     <p className="text-red-500 text-xs mt-1">{passwordErrors.newPassword}</p>
                   )}
                 </div>
-                
+
                 <div>
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Confirm Password</label>
                   <input
@@ -968,17 +1052,16 @@ const Settings = () => {
                     onChange={handlePasswordInputChange}
                     placeholder="Confirm Password"
                     disabled={isGoogleUser}
-                    className={`w-full px-2.5 sm:px-3 py-2 text-sm sm:text-base border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
-                      passwordErrors.confirmPassword ? 'border-red-500' : 'border-gray-300'
-                    } ${isGoogleUser ? 'bg-gray-100 cursor-not-allowed' : 'bg-gray-50'}`}
+                    className={`w-full px-2.5 sm:px-3 py-2 text-sm sm:text-base border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${passwordErrors.confirmPassword ? 'border-red-500' : 'border-gray-300'
+                      } ${isGoogleUser ? 'bg-gray-100 cursor-not-allowed' : 'bg-gray-50'}`}
                   />
                   {passwordErrors.confirmPassword && (
                     <p className="text-red-500 text-xs mt-1">{passwordErrors.confirmPassword}</p>
                   )}
                 </div>
-                
+
                 <div className="flex gap-2 sm:gap-3 pt-2">
-                  <button 
+                  <button
                     onClick={() => {
                       setPasswordData({
                         currentPassword: "",
@@ -993,68 +1076,61 @@ const Settings = () => {
                       });
                     }}
                     disabled={isGoogleUser}
-                    className={`flex-1 py-1.5 sm:py-2 px-3 sm:px-4 rounded-lg text-sm sm:text-base font-medium transition-colors ${
-                      isGoogleUser
-                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                        : "bg-gray-200 hover:bg-gray-300 text-gray-700"
-                    }`}
+                    className={`flex-1 py-1.5 sm:py-2 px-3 sm:px-4 rounded-lg text-sm sm:text-base font-medium transition-colors ${isGoogleUser
+                      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                      : "bg-gray-200 hover:bg-gray-300 text-gray-700"
+                      }`}
                   >
                     Cancel
                   </button>
-                  <button 
+                  <button
                     onClick={handleChangePassword}
                     disabled={isGoogleUser || isUpdatingPassword}
-                    className={`flex-1 py-1.5 sm:py-2 px-3 sm:px-4 rounded-lg text-sm sm:text-base font-medium transition-colors ${
-                      isGoogleUser || isUpdatingPassword
-                        ? "bg-gray-400 text-white cursor-not-allowed"
-                        : "bg-green-600 hover:bg-green-700 text-white"
-                    }`}
+                    className={`flex-1 py-1.5 sm:py-2 px-3 sm:px-4 rounded-lg text-sm sm:text-base font-medium transition-colors ${isGoogleUser || isUpdatingPassword
+                      ? "bg-gray-400 text-white cursor-not-allowed"
+                      : "bg-green-600 hover:bg-green-700 text-white"
+                      }`}
                     title={isGoogleUser ? "Password change is not available for Google accounts" : ""}
                   >
                     {isUpdatingPassword ? "Updating..." : "Update"}
                   </button>
                 </div>
               </div>
-              
+
               <div className="lg:pl-8">
                 <h4 className="text-xs sm:text-sm font-medium text-gray-600 mb-3 sm:mb-4">Password must contains:</h4>
                 <div className="space-y-2 sm:space-y-3">
                   <div className="flex items-center gap-2 sm:gap-3">
-                    <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
-                      passwordData.newPassword.length >= 8 ? 'bg-green-500' : 'bg-gray-300'
-                    }`}>
+                    <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center flex-shrink-0 ${passwordData.newPassword.length >= 8 ? 'bg-green-500' : 'bg-gray-300'
+                      }`}>
                       <span className="text-white text-xs">✓</span>
                     </div>
                     <span className="text-xs sm:text-sm text-gray-700">Min 8 characters</span>
                   </div>
                   <div className="flex items-center gap-2 sm:gap-3">
-                    <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
-                      /[a-z]/.test(passwordData.newPassword) ? 'bg-green-500' : 'bg-gray-300'
-                    }`}>
+                    <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center flex-shrink-0 ${/[a-z]/.test(passwordData.newPassword) ? 'bg-green-500' : 'bg-gray-300'
+                      }`}>
                       <span className="text-white text-xs">✓</span>
                     </div>
                     <span className="text-xs sm:text-sm text-gray-700">Lower-case Letter</span>
                   </div>
                   <div className="flex items-center gap-2 sm:gap-3">
-                    <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
-                      /[!@#$%^&*(),.?":{}|<>]/.test(passwordData.newPassword) ? 'bg-green-500' : 'bg-gray-300'
-                    }`}>
+                    <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center flex-shrink-0 ${/[!@#$%^&*(),.?":{}|<>]/.test(passwordData.newPassword) ? 'bg-green-500' : 'bg-gray-300'
+                      }`}>
                       <span className="text-white text-xs">✓</span>
                     </div>
                     <span className="text-xs sm:text-sm text-gray-700">Special Character</span>
                   </div>
                   <div className="flex items-center gap-2 sm:gap-3">
-                    <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
-                      /[A-Z]/.test(passwordData.newPassword) ? 'bg-green-500' : 'bg-gray-300'
-                    }`}>
+                    <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center flex-shrink-0 ${/[A-Z]/.test(passwordData.newPassword) ? 'bg-green-500' : 'bg-gray-300'
+                      }`}>
                       <span className="text-white text-xs">✓</span>
                     </div>
                     <span className="text-xs sm:text-sm text-gray-700">Upper-case Letter</span>
                   </div>
                   <div className="flex items-center gap-2 sm:gap-3">
-                    <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
-                      /\d/.test(passwordData.newPassword) ? 'bg-green-500' : 'bg-gray-300'
-                    }`}>
+                    <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center flex-shrink-0 ${/\d/.test(passwordData.newPassword) ? 'bg-green-500' : 'bg-gray-300'
+                      }`}>
                       <span className="text-white text-xs">✓</span>
                     </div>
                     <span className="text-xs sm:text-sm text-gray-700">Number</span>
@@ -1065,13 +1141,22 @@ const Settings = () => {
           </div>
 
           <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm mb-6 text-center">
-            <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4">Delete My Account</h3>
-            <button
-              onClick={handleDeleteAccount}
-              className="bg-red-600 hover:bg-red-700 text-white py-2 px-4 sm:px-6 rounded-lg text-sm sm:text-base font-medium transition-colors mx-auto"
-            >
-              Delete Account
-            </button>
+            <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4">Account Actions</h3>
+            <div className="flex gap-3 justify-center">
+              <button
+                id="reset-data-button"
+                onClick={handleResetData}
+                className="bg-white border border-red-200 text-red-600 hover:bg-red-50 py-2 px-4 sm:px-6 rounded-lg text-sm sm:text-base font-medium transition-colors"
+              >
+                Reset Data
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                className="bg-red-600 hover:bg-red-700 text-white py-2 px-4 sm:px-6 rounded-lg text-sm sm:text-base font-medium transition-colors"
+              >
+                Delete Account
+              </button>
+            </div>
           </div>
         </div>
       </main>
@@ -1080,6 +1165,12 @@ const Settings = () => {
         onClose={() => setShowDeleteModal(false)}
         onConfirm={confirmDeleteAccount}
         isLoading={isDeleting}
+      />
+      <ResetDataModal
+        isOpen={showResetDataModal}
+        onClose={() => setShowResetDataModal(false)}
+        onConfirm={confirmResetData}
+        isLoading={isResetting}
       />
       <DeleteSuccessModal
         isOpen={showDeleteSuccessModal}
@@ -1108,6 +1199,14 @@ const Settings = () => {
         isOpen={showPhotoSuccessModal}
         message="Profile photo updated successfully! Your new photo is now visible."
         onClose={() => setShowPhotoSuccessModal(false)}
+      />
+      <SuccessModal
+        isOpen={showResetSuccessModal}
+        message="Data reset successfully! All your transactions, budgets, and accounts have been cleared."
+        onClose={() => {
+          setShowResetSuccessModal(false);
+          window.location.reload();
+        }}
       />
     </div>
   );

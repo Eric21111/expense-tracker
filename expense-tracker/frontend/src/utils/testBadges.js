@@ -8,20 +8,17 @@ export const testIncomeBadge = async () => {
   }
   
   console.log('Testing Income Badge for:', userEmail);
-  
-  // Clear badge cache
+
   const shownBadges = JSON.parse(localStorage.getItem(`shownBadges_${userEmail}`) || '[]');
   const filteredShown = shownBadges.filter(id => id !== 'income-initiator');
   localStorage.setItem(`shownBadges_${userEmail}`, JSON.stringify(filteredShown));
-  
-  // Clear badge progress for income-initiator
+
   const badgeProgress = JSON.parse(localStorage.getItem(`badgeProgress_${userEmail}`) || '{}');
   delete badgeProgress['income-initiator'];
   localStorage.setItem(`badgeProgress_${userEmail}`, JSON.stringify(badgeProgress));
-  
-  // Fetch transactions from backend
+
   try {
-    const response = await fetch('http://localhost:5000/transactions', {
+    const response = await fetch('http:
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -41,8 +38,7 @@ export const testIncomeBadge = async () => {
       if (incomeTransactions.length > 0) {
         console.log('✅ You should receive the Income Initiator badge!');
         console.log('Triggering badge check...');
-        
-        // Trigger badge check
+
         window.dispatchEvent(new Event('transactionAdded'));
       } else {
         console.log('❌ No income transactions found');
@@ -53,5 +49,4 @@ export const testIncomeBadge = async () => {
   }
 };
 
-// Run the test
 testIncomeBadge();

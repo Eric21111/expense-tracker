@@ -12,7 +12,7 @@ import WalletIllustration from "../../assets/wallet.png";
 import PasswordInput from "../../components/PasswordInput";
 import ForgotPasswordModal from "../../components/ForgotPasswordModal";
 <link
-  href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap"
+  href="https:
   rel="stylesheet"
 ></link>;
 
@@ -39,7 +39,7 @@ const Login = () => {
     setErrorMessage("");
 
     try {
-      const res = await axios.post("http://localhost:5000/users/login", {
+      const res = await axios.post("http:
         email,
         password,
       });
@@ -69,7 +69,7 @@ const Login = () => {
     try {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
-      const res = await axios.post("http://localhost:5000/users/google", {
+      const res = await axios.post("http:
         name: user.displayName,
         email: user.email,
         photoURL: user.photoURL,
@@ -89,7 +89,6 @@ const Login = () => {
 
       window.dispatchEvent(new Event("userStorageChange"));
 
-      
       navigate("/dashboard");
     } catch (error) {
       console.error("Google login failed:", error);

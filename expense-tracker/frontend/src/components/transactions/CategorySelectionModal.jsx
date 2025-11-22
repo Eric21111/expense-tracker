@@ -50,7 +50,6 @@ const CategorySelectionModal = ({ isOpen, onClose, onSelectCategory, transaction
   const defaultCategories = transactionType === 'Income' ? incomeCategories : expenseCategories;
   const categories = [...defaultCategories, ...customCategoriesFiltered];
 
-
   const getIconSrc = (iconName, categoryType) => {
     const iconPaths = {
       'GcashIcon': '/src/assets/income icon/arcticons_gcash.svg',
@@ -125,7 +124,6 @@ const CategorySelectionModal = ({ isOpen, onClose, onSelectCategory, transaction
           </div>
         </div>
 
-
         <div className="px-6 py-6">
           <div className="grid grid-cols-3 gap-4 mb-6">
             {categories.map((category) => {
@@ -180,6 +178,5 @@ const CategorySelectionModal = ({ isOpen, onClose, onSelectCategory, transaction
     </div>
   );
 };
-
 
 export default CategorySelectionModal;

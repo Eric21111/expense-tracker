@@ -12,8 +12,7 @@ const Footer = () => {
       }}
     >
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_2.2fr] gap-12 lg:gap-20 items-start">
-       
-       
+
         <div className="flex flex-col gap-6">
           <div className="flex items-center gap-4">
             <div className="w-20 h-20 relative flex-shrink-0">
@@ -27,7 +26,6 @@ const Footer = () => {
           </div>
         </div>
 
-      
         <div>
           <h4 className="text-lg mb-5 font-bold text-white">Navigation</h4>
           <ul className="list-none space-y-2.5">

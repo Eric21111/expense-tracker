@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { FaArrowDown, FaArrowRight } from "react-icons/fa";
 import { getTransactionSummary } from "../../services/transactionService";
+import { getAccounts } from "../../services/accountApiService";
 import { useCurrency } from "../../contexts/CurrencyContext";
 
 const TransactionSummaryCard = ({ refreshTrigger, dateFilters }) => {
@@ -27,18 +28,27 @@ const TransactionSummaryCard = ({ refreshTrigger, dateFilters }) => {
   useEffect(() => {
     if (!userEmail) return;
     
-    const loadAccountBalance = () => {
-      const savedAccounts = localStorage.getItem(`accounts_${userEmail}`);
-      if (savedAccounts) {
-        try {
-          const accounts = JSON.parse(savedAccounts);
-          const totalBalance = accounts.reduce((sum, account) => sum + (account.balance || 0), 0);
-          setAccountBalance(totalBalance);
-        } catch (error) {
-          console.error("Error loading accounts from localStorage:", error);
-          setAccountBalance(0);
+    const loadAccountBalance = async () => {
+      try {
+        const result = await getAccounts();
+        console.log('💰 TransactionSummary - Accounts response:', result);
+        
+        let accounts = [];
+        if (result.success && result.accounts) {
+          accounts = result.accounts;
+        } else if (Array.isArray(result)) {
+          accounts = result;
         }
-      } else {
+        
+        const totalBalance = accounts.reduce((sum, account) => {
+          const balance = account.enabled ? (account.balance || 0) : 0;
+          return sum + balance;
+        }, 0);
+        
+        console.log('💰 TransactionSummary - Total Balance:', totalBalance);
+        setAccountBalance(totalBalance);
+      } catch (error) {
+        console.error("Error loading accounts from database:", error);
         setAccountBalance(0);
       }
     };
@@ -80,7 +90,6 @@ const TransactionSummaryCard = ({ refreshTrigger, dateFilters }) => {
         <p className="text-xs sm:text-sm text-gray-200">Total balance in all accounts</p>
       </div>
 
-  
       <div className="flex-1 flex items-center justify-center">
         {loading ? (
           <p className="text-xl sm:text-2xl font-semibold tracking-tight my-3 sm:my-4">Loading...</p>

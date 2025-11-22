@@ -74,7 +74,6 @@ const DashboardCalendar = ({ onDateRangeChange, viewType = "Monthly" }) => {
       day
     );
 
-   
     if (startDate && clickedDate.toDateString() === startDate.toDateString()) {
       setStartDate(null);
       setEndDate(null);
@@ -106,7 +105,6 @@ const DashboardCalendar = ({ onDateRangeChange, viewType = "Monthly" }) => {
         setEndDate(clickedDate);
       }
       setIsSelectingRange(false);
-      
 
       if (onDateRangeChange) {
         const start = clickedDate < startDate ? clickedDate : startDate;

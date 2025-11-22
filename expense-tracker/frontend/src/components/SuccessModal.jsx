@@ -30,7 +30,7 @@ const SuccessModal = ({ isOpen, onClose, onConfirm }) => {
                 height="80"
                 viewBox="0 0 80 80"
                 fill="none"
-                xmlns="http://www.w3.org/2000/svg"
+                xmlns="http:
               >
                 <path
                   d="M25 40L35 50L55 30"
@@ -43,17 +43,14 @@ const SuccessModal = ({ isOpen, onClose, onConfirm }) => {
             </div>
           </div>
 
-         
           <h2 className="text-2xl font-bold text-gray-900 mb-3">
             Success!
           </h2>
 
-         
           <p className="text-gray-600 mb-8">
             Your password has been updated.
           </p>
 
-        
           <button
             onClick={onConfirm}
             className="w-full py-3 px-6 rounded-xl text-white font-semibold bg-green-500 hover:bg-green-600 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"

@@ -58,7 +58,7 @@ const PasswordChangeVerificationModal = ({ isOpen, onClose, email, onSuccess, on
     setMessage("");
 
     try {
-      const res = await axios.post("http://localhost:5000/users/verify-password-code", {
+      const res = await axios.post("http:
         email,
         code: verificationCode,
       });
@@ -79,7 +79,7 @@ const PasswordChangeVerificationModal = ({ isOpen, onClose, email, onSuccess, on
     setMessage("");
     
     try {
-      const res = await axios.post("http://localhost:5000/users/send-password-change-code", {
+      const res = await axios.post("http:
         email,
       });
       

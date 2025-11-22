@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { getTransactionSummary } from "../../services/transactionService";
-import { loadBudgetsWithReset } from "../../services/budgetService";
+import { getBudgets } from "../../services/budgetApiService";
+import { useCurrency } from "../../contexts/CurrencyContext";
 
 const BudgetProgress = ({ dateRange }) => {
+  const { formatAmount } = useCurrency();
   const [budgetData, setBudgetData] = useState({
     totalBudget: 0, 
     totalExpense: 0,
@@ -22,7 +24,6 @@ const BudgetProgress = ({ dateRange }) => {
     }
   }, []);
 
-
   useEffect(() => {
     if (userEmail) {
       fetchAllBudgetData();
@@ -38,8 +39,18 @@ const BudgetProgress = ({ dateRange }) => {
       } else {
         setRefreshing(true);
       }
+      
       let totalBudget = 0;
-      const budgetItems = loadBudgetsWithReset(userEmail);
+      const budgetResult = await getBudgets();
+      console.log('📊 BudgetProgress - Budgets response:', budgetResult);
+      
+      let budgetItems = [];
+      if (budgetResult.success && budgetResult.budgets) {
+        budgetItems = budgetResult.budgets;
+      } else if (Array.isArray(budgetResult)) {
+        budgetItems = budgetResult;
+      }
+      
       if (budgetItems && budgetItems.length > 0) {
         const grouped = {};
         let singleTotal = 0;
@@ -50,10 +61,11 @@ const BudgetProgress = ({ dateRange }) => {
               grouped[budget.groupId] = budget.totalBudget || budget.amount;
             }
           } else {
-            singleTotal += budget.amount;
+            singleTotal += budget.amount || 0;
           }
         });
         totalBudget = Object.values(grouped).reduce((sum, val) => sum + val, singleTotal);
+        console.log('📊 BudgetProgress - Total Budget:', totalBudget, 'from', budgetItems.length, 'budgets');
       }
       let filters = {};
       if (dateRange) {
@@ -74,6 +86,12 @@ const BudgetProgress = ({ dateRange }) => {
         const totalExpense = response.summary.totalExpense || 0;
         const percentage = totalBudget > 0 ? Math.min((totalExpense / totalBudget) * 100, 100) : 0;
         
+        console.log('📊 BudgetProgress - Final data:', {
+          totalBudget,
+          totalExpense,
+          percentage: Math.round(percentage)
+        });
+        
         setBudgetData({
           totalBudget,
           totalExpense,
@@ -88,7 +106,6 @@ const BudgetProgress = ({ dateRange }) => {
     }
   };
 
-  
   const radius = 80;
   const circumference = Math.PI * radius;
   const progressLength = (circumference * budgetData.percentage) / 100;
@@ -174,7 +191,7 @@ const BudgetProgress = ({ dateRange }) => {
                     of budget used
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
-                    PHP {budgetData.totalExpense.toLocaleString()} / {budgetData.totalBudget.toLocaleString()}
+                    {formatAmount(budgetData.totalExpense)} / {formatAmount(budgetData.totalBudget)}
                   </p>
                 </>
               )}

@@ -10,6 +10,9 @@ import transactionRoutes from "./routes/transactionRoutes.js";
 import aiInsightsRoutes from "./routes/aiInsightsRoutes.js";
 import emailRoutes from "./routes/emailRoutes.js";
 import badgeRoutes from "./routes/badgeRoutes.js";
+import budgetRoutes from "./routes/budgetRoutes.js";
+import accountRoutes from "./routes/accountRoutes.js";
+import notificationRoutes from "./routes/notificationRoutes.js";
 import transporter from "./utils/emailService.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -25,16 +28,16 @@ connectDB();
 
 app.get("/test-email", async (req, res) => {
   try {
- 
+
     await transporter.verify();
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       message: "Email configuration is working!",
-      user: process.env.EMAIL_USER 
+      user: process.env.EMAIL_USER
     });
   } catch (error) {
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       error: error.message,
       user: process.env.EMAIL_USER,
       hasPassword: !!process.env.EMAIL_PASSWORD
@@ -42,13 +45,15 @@ app.get("/test-email", async (req, res) => {
   }
 });
 
-
 app.use("/users", authRoutes);
 app.use("/users", passwordRoutes);
 app.use("/transactions", transactionRoutes);
+app.use("/budgets", budgetRoutes);
+app.use("/accounts", accountRoutes);
 app.use("/ai-insights", aiInsightsRoutes);
 app.use("/email", emailRoutes);
 app.use("/api", badgeRoutes);
+app.use("/notifications", notificationRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

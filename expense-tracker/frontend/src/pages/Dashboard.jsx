@@ -3,20 +3,22 @@ import Sidebar from "../components/shared/Sidebar";
 import { useSidebar } from '../contexts/SidebarContext';
 import { useCurrency } from '../contexts/CurrencyContext';
 import ManIllustration from "../assets/man.svg";
-import Header from "../components/shared/Header2"; 
+import Header from "../components/shared/Header2";
 import WelcomeBanner from "../components/dashboard/WelcomeBanner";
 import StatCard from "../components/dashboard/StatCard";
-import DashboardCalendar from "../components/dashboard/DashboardCalendar";
 import ExpenseBreakdownChart from "../components/dashboard/ExpenseBreakdownChart";
 import BudgetProgress from "../components/dashboard/BudgetProgress";
 import AchievementsCard from "../components/dashboard/AchievementsCard";
 import RecentExpenses from "../components/dashboard/RecentExpenses";
 import AiInsights from "../components/dashboard/AiInsights";
-import { FaPiggyBank, FaWallet, FaMoneyBillWave } from "react-icons/fa"; 
+import { FaPiggyBank, FaWallet, FaMoneyBillWave } from "react-icons/fa";
 import Header2 from "../components/shared/Header2";
 import { getTransactionSummary, getTransactions } from "../services/transactionService";
 import { loadBudgetsWithReset } from "../services/budgetService";
+import { getBudgets } from "../services/budgetApiService";
+import { getAccounts } from "../services/accountApiService";
 import { processAndShowAlerts } from "../services/notificationService";
+import { checkAndStartTour } from "../utils/tutorial";
 
 const Dashboard = () => {
   const [username, setUsername] = useState("User");
@@ -24,6 +26,10 @@ const Dashboard = () => {
   const [dashboardView, setDashboardView] = useState(() => {
     return localStorage.getItem("dashboardView") || "Monthly";
   });
+
+  useEffect(() => {
+    checkAndStartTour();
+  }, []);
   const { isExpanded } = useSidebar();
   const { formatAmount, getCurrencySymbol } = useCurrency();
   const [summary, setSummary] = useState({
@@ -35,9 +41,15 @@ const Dashboard = () => {
   const [totalBudget, setTotalBudget] = useState(0);
   const [loading, setLoading] = useState(true);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [dateRange, setDateRange] = useState(null);
+  const [dateRange, setDateRange] = useState(() => {
+    const now = new Date();
+    return {
+      start: new Date(now.getFullYear(), now.getMonth(), 1),
+      end: new Date(now.getFullYear(), now.getMonth() + 1, 0)
+    };
+  });
   const [hasDataInRange, setHasDataInRange] = useState(true);
-  
+
   const refreshData = () => {
     setRefreshTrigger(prev => prev + 1);
   };
@@ -61,7 +73,7 @@ const Dashboard = () => {
         const user = JSON.parse(storedUser);
         setUsername(user.name || user.displayName || "User");
         setUserEmail(user.email || "");
-        
+
         setTimeout(() => {
           window.dispatchEvent(new Event('pageLoad'));
         }, 1000);
@@ -83,14 +95,28 @@ const Dashboard = () => {
   }, []);
 
   useEffect(() => {
-    const loadBudgets = () => {
+    const loadBudgets = async () => {
       if (!userEmail) return;
-      
-      const budgetItems = loadBudgetsWithReset(userEmail);
-      if (budgetItems && budgetItems.length > 0) {
-        const total = budgetItems.reduce((sum, budget) => sum + budget.amount, 0);
-        setTotalBudget(total);
-      } else {
+
+      try {
+        const budgetResult = await getBudgets();
+        let budgetItems = [];
+
+        if (budgetResult.success && budgetResult.budgets) {
+          budgetItems = budgetResult.budgets;
+        } else if (Array.isArray(budgetResult)) {
+          budgetItems = budgetResult;
+        }
+
+        if (budgetItems && budgetItems.length > 0) {
+          const total = budgetItems.reduce((sum, budget) => sum + (budget.amount || 0), 0);
+          console.log('📊 Dashboard - Total Budget:', total, 'from', budgetItems.length, 'budgets');
+          setTotalBudget(total);
+        } else {
+          setTotalBudget(0);
+        }
+      } catch (error) {
+        console.error('Error loading budgets:', error);
         setTotalBudget(0);
       }
     };
@@ -100,30 +126,37 @@ const Dashboard = () => {
     }
   }, [userEmail]);
 
-  const loadAccountsBalance = () => {
-    if (!userEmail) return 0;
-    
-    const savedAccounts = localStorage.getItem(`accounts_${userEmail}`);
-    if (savedAccounts) {
-      try {
-        const accounts = JSON.parse(savedAccounts);
-        return accounts
-          .filter(account => account.enabled)
-          .reduce((sum, account) => sum + (account.balance || 0), 0);
-      } catch (e) {
-        console.error('Error parsing accounts:', e);
+  const loadAccountsBalance = async () => {
+    try {
+      const result = await getAccounts();
+      console.log('💰 Dashboard - Accounts response:', result);
+
+      let accounts = [];
+      if (result.success && result.accounts) {
+        accounts = result.accounts;
+      } else if (Array.isArray(result)) {
+        accounts = result;
       }
+
+      const totalBalance = accounts
+        .filter(account => account.enabled)
+        .reduce((sum, account) => sum + (account.balance || 0), 0);
+
+      console.log('💰 Dashboard - Total Balance:', totalBalance);
+      return totalBalance;
+    } catch (e) {
+      console.error('Error loading accounts from database:', e);
+      return 0;
     }
-    return 0;
   };
 
   useEffect(() => {
     const fetchSummary = async () => {
       try {
         if (!userEmail) return;
-        
+
         setLoading(true);
-        
+
         let startDate, endDate;
         if (dateRange) {
           startDate = new Date(dateRange.start);
@@ -149,21 +182,45 @@ const Dashboard = () => {
         });
 
         if (summaryResponse.success) {
-          const totalAccountsBalance = loadAccountsBalance();
+          const totalAccountsBalance = await loadAccountsBalance();
           setAccountsBalance(totalAccountsBalance);
-          
+
           const updatedSummary = {
             ...summaryResponse.summary,
             totalBalance: totalAccountsBalance
           };
           setSummary(updatedSummary);
-          
-          const budgets = await loadBudgetsWithReset(userEmail);
-          
+
+          const budgetResult = await getBudgets();
+          console.log('📊 Dashboard - Budgets response:', budgetResult);
+
+          let budgets = [];
+          if (budgetResult.success && budgetResult.budgets) {
+            budgets = budgetResult.budgets;
+          } else if (Array.isArray(budgetResult)) {
+            budgets = budgetResult;
+          }
+
+          let filteredBudgets = budgets;
+          if (dateRange) {
+            const rangeStart = new Date(dateRange.start);
+            const rangeEnd = new Date(dateRange.end);
+            const rangeMonth = rangeStart.getMonth();
+            const rangeYear = rangeStart.getFullYear();
+            const monthKey = `${rangeYear}-${String(rangeMonth + 1).padStart(2, '0')}`;
+
+            filteredBudgets = budgets.filter(budget => {
+              if (budget.monthKey) {
+                return budget.monthKey === monthKey;
+              }
+              return true;
+            });
+          }
+
           const grouped = {};
           let singleTotal = 0;
-          
-          budgets.forEach((budget) => {
+
+          filteredBudgets.forEach((budget) => {
             if (budget.groupId) {
               if (!grouped[budget.groupId]) {
                 grouped[budget.groupId] = budget.totalBudget || budget.amount;
@@ -172,7 +229,7 @@ const Dashboard = () => {
               singleTotal += budget.amount;
             }
           });
-          
+
           const totalBudgetAmount = Object.values(grouped).reduce((sum, val) => sum + val, singleTotal);
           setTotalBudget(totalBudgetAmount);
 
@@ -182,7 +239,7 @@ const Dashboard = () => {
               .reduce((sum, t) => sum + t.amount, 0);
             const income = incomeTransactions.filter(t => t.category !== 'Gift' && t.category !== 'Gifts')
               .reduce((sum, t) => sum + t.amount, 0);
-            
+
             if (dateRange) {
               const totalIncomeInRange = gifts + income;
               setHasDataInRange(prev => prev || totalIncomeInRange > 0);
@@ -204,19 +261,19 @@ const Dashboard = () => {
       fetchSummary();
     }
   }, [userEmail, refreshTrigger, dateRange]);
-  
+
   useEffect(() => {
     if (userEmail) {
       const totalAccountsBalance = loadAccountsBalance();
       setAccountsBalance(totalAccountsBalance);
-      
+
       setSummary(prevSummary => ({
         ...prevSummary,
         totalBalance: totalAccountsBalance
       }));
     }
   }, [userEmail, refreshTrigger]);
-  
+
   useEffect(() => {
     const handleStorageChange = (e) => {
       if (e.key === `accounts_${userEmail}` && userEmail) {
@@ -228,7 +285,7 @@ const Dashboard = () => {
         }));
       }
     };
-    
+
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, [userEmail]);
@@ -237,23 +294,25 @@ const Dashboard = () => {
     <div className="flex min-h-screen bg-[#F5F5F5] font-poppins relative">
       <Sidebar />
       <main
-        className={`flex-1 bg-[#F5F5F5] transition-all duration-300 ease-in-out relative z-0 ${
-          isExpanded ? "lg:ml-64" : "lg:ml-20"
-        } ml-0`}
+        className={`flex-1 bg-[#F5F5F5] transition-all duration-300 ease-in-out relative z-0 ${isExpanded ? "lg:ml-64" : "lg:ml-20"
+          } ml-0`}
       >
-      
+
         <Header2 username={username} title="Dashboard" />
 
         <div className="p-4 sm:p-6 lg:p-8">
 
-          
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6 mb-3">
-            <div className="xl:col-span-2 space-y-4 sm:space-y-6">
-              <WelcomeBanner
-                username={username}
-                illustration={ManIllustration}
-              />
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            
+            <div className="xl:col-span-2 space-y-6">
+              <div id="welcome-banner">
+                <WelcomeBanner
+                  username={username}
+                  illustration={ManIllustration}
+                />
+              </div>
+
+              <div id="stat-cards" className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
                 <StatCard
                   title="Total Balance"
                   amount={loading ? "Loading..." : formatAmount(summary.totalBalance)}
@@ -269,42 +328,33 @@ const Dashboard = () => {
                 <StatCard
                   title="Total Budgeted"
                   amount={loading ? "Loading..." : formatAmount(totalBudget)}
-                  description="Saved amount this month"
+                  description={dateRange ? "Budget for selected period" : "Saved amount this month"}
                   icon={<FaPiggyBank className="text-green-600 text-xl sm:text-2xl" />}
                 />
               </div>
-            </div>
-            <DashboardCalendar 
-              onDateRangeChange={handleDateRangeChange} 
-              viewType={dashboardView}
-            />
-          </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-[2.5fr_0.9fr_0.8fr] gap-4 sm:gap-6 mb-4 sm:mb-6 items-stretch">
               {(!dateRange || hasDataInRange) ? (
-              <ExpenseBreakdownChart dateRange={dateRange} />
-            ) : (
-              <div className="bg-white p-4 sm:p-6 shadow-md rounded-2xl sm:rounded-[30px] flex items-center justify-center min-h-[200px]">
-                <div className="text-center text-gray-500">
-                  <p className="text-lg mb-2">📊</p>
-                  <p className="font-medium">No expenses to display</p>
-                  <p className="text-sm">Select a different date range or add expenses</p>
+                <ExpenseBreakdownChart dateRange={dateRange} />
+              ) : (
+                <div className="bg-white p-4 sm:p-6 shadow-md rounded-2xl sm:rounded-[30px] flex items-center justify-center min-h-[200px]">
+                  <div className="text-center text-gray-500">
+                    <p className="text-lg mb-2">📊</p>
+                    <p className="font-medium">No expenses to display</p>
+                    <p className="text-sm">Select a different date range or add expenses</p>
+                  </div>
                 </div>
-              </div>
-            )}
-            <BudgetProgress dateRange={dateRange} />
-            <div className="hidden xl:block">
-              <AchievementsCard />
-            </div>
-          </div>
-          
-          <div className="block xl:hidden mb-4 sm:mb-6">
-            <AchievementsCard />
-          </div>
+              )}
 
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6 mb-4 sm:mb-6">
-            <RecentExpenses dateRange={dateRange} />
-            <AiInsights />
+              <RecentExpenses dateRange={dateRange} />
+            </div>
+
+            <div className="space-y-6">
+              <AchievementsCard />
+              <BudgetProgress dateRange={dateRange} />
+              <div id="ai-insights">
+                <AiInsights />
+              </div>
+            </div>
           </div>
         </div>
       </main>

@@ -2,12 +2,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
 
 @layer base {
-    html,
-    body,
-    * {
-      font-family: 'Poppins', sans-serif;
-    }
+
+  html,
+  body,
+  * {
+    font-family: 'Poppins', sans-serif;
   }
+}
 
 /* Global button and clickable element styles */
 button,
@@ -31,12 +32,14 @@ input[type="reset"]:disabled {
 }
 
 /* Links styled as buttons */
-a.button, a.btn {
+a.button,
+a.btn {
   cursor: pointer;
 }
 
 /* Clickable elements with specific classes */
-.clickable, .cursor-pointer {
+.clickable,
+.cursor-pointer {
   cursor: pointer !important;
 }
 
@@ -73,7 +76,7 @@ input[type="radio"] {
   animation: slideOutRight 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
-.transition-wrapper > * {
+.transition-wrapper>* {
   width: 100%;
 }
 
@@ -82,6 +85,7 @@ input[type="radio"] {
     transform: translateX(100%);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;
@@ -93,6 +97,7 @@ input[type="radio"] {
     transform: translateX(-100%);
     opacity: 0;
   }
+
   100% {
     transform: translateX(0);
     opacity: 1;
@@ -104,6 +109,7 @@ input[type="radio"] {
     transform: translateX(0);
     opacity: 1;
   }
+
   to {
     transform: translateX(-100%);
     opacity: 0;
@@ -114,6 +120,7 @@ input[type="radio"] {
   from {
     opacity: 1;
   }
+
   to {
     opacity: 0;
   }
@@ -124,6 +131,7 @@ input[type="radio"] {
     transform: translateX(0);
     opacity: 1;
   }
+
   100% {
     transform: translateX(100%);
     opacity: 0;
@@ -135,6 +143,7 @@ input[type="radio"] {
   0% {
     transform: translateX(-100%) translateY(-100%) rotate(45deg);
   }
+
   100% {
     transform: translateX(100%) translateY(100%) rotate(45deg);
   }
@@ -143,4 +152,111 @@ input[type="radio"] {
 .animate-shine {
   animation: shine 3s infinite;
 }
-  
+
+/* Custom scrollbar styles */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #10B981 #F3F4F6;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #F3F4F6;
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #10B981;
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #059669;
+}
+
+/* Hide number input arrows */
+.no-spinner::-webkit-outer-spin-button,
+.no-spinner::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.no-spinner[type=number] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* Driver.js Tutorial Z-Index Overrides - Must be above modals! */
+.driver-popover-modal,
+.driver-popover-high-z,
+.driver-popover,
+div.driver-popover {
+  z-index: 99999 !important;
+  pointer-events: auto !important;
+}
+
+.driver-overlay,
+div.driver-overlay {
+  z-index: 99998 !important;
+  pointer-events: auto !important;
+}
+
+.driver-highlighted-element,
+div.driver-highlighted-element {
+  z-index: 99999 !important;
+  pointer-events: auto !important;
+  position: relative !important;
+}
+
+/* Ensure buttons that are highlighted are always clickable */
+.driver-highlighted-element button,
+div.driver-highlighted-element button {
+  z-index: 100000 !important;
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  position: relative !important;
+}
+
+/* Floating action buttons should keep their fixed position */
+#add-first-account-button.driver-highlighted-element,
+#add-budget-button.driver-highlighted-element,
+#add-transaction-button.driver-highlighted-element {
+  z-index: 100000 !important;
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  position: fixed !important; /* Keep fixed position, don't change to relative */
+}
+
+/* Ensure buttons inside popover are clickable */
+.driver-popover button,
+.driver-popover-modal button {
+  z-index: 100000 !important;
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
+/* Lower modal z-index when tutorial is active - AGGRESSIVE targeting */
+body.tutorial-active div[id*="backdrop"],
+body.tutorial-active .fixed.inset-0 {
+  z-index: 40 !important;
+}
+
+/* Ensure modals appear above tutorial-highlighted buttons */
+div[id*="backdrop"] {
+  z-index: 100001 !important;
+}
+
+div[id*="backdrop"] > div {
+  z-index: 100002 !important;
+}
+
+/* Lower highlighted button z-index when modal is open */
+body:has(div[id*="backdrop"]) .driver-highlighted-element,
+body:has(div[id*="backdrop"]) #add-first-account-button,
+body:has(div[id*="backdrop"]) #add-budget-button,
+body:has(div[id*="backdrop"]) #add-transaction-button {
+  z-index: 1 !important;
+}

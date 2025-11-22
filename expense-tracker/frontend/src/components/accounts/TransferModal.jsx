@@ -21,22 +21,22 @@ const TransferModal = ({ isOpen, onClose, onSubmit, accounts = [] }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     if (!formData.fromAccount || !formData.toAccount || !formData.amount) {
       alert('Please fill in all required fields');
       return;
     }
-    
+
     if (formData.fromAccount === formData.toAccount) {
       alert('Cannot transfer to the same account');
       return;
     }
-    
+
     if (parseFloat(formData.amount) <= 0) {
       alert('Transfer amount must be greater than 0');
       return;
     }
-    
+
     const transferData = {
       id: Date.now(),
       fromAccount: formData.fromAccount,
@@ -46,7 +46,7 @@ const TransferModal = ({ isOpen, onClose, onSubmit, accounts = [] }) => {
       description: formData.description.trim(),
       type: 'transfer'
     };
-    
+
     onSubmit(transferData);
     setFormData({
       fromAccount: '',
@@ -69,7 +69,7 @@ const TransferModal = ({ isOpen, onClose, onSubmit, accounts = [] }) => {
   const availableToAccounts = enabledAccounts.filter(acc => acc.id !== parseInt(formData.fromAccount));
 
   return (
-     <div
+    <div
       id="backdrop"
       onClick={handleBackdropClick}
       className="fixed inset-0 bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 font-poppins p-4"
@@ -84,7 +84,7 @@ const TransferModal = ({ isOpen, onClose, onSubmit, accounts = [] }) => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
-          
+
           <h3 className="text-xl font-bold text-gray-800">Create Transfer</h3>
         </div>
 
@@ -149,7 +149,8 @@ const TransferModal = ({ isOpen, onClose, onSubmit, accounts = [] }) => {
                 name="amount"
                 value={formData.amount}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent pr-16"
+                onWheel={(e) => e.target.blur()}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent pr-16 no-spinner"
                 placeholder="10000"
                 min="0"
                 step="0.01"

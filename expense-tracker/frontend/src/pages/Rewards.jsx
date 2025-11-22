@@ -5,6 +5,7 @@ import { useSidebar } from '../contexts/SidebarContext';
 import { FaTrophy, FaMedal } from "react-icons/fa";
 import BadgeCard from "../components/rewards/BadgeCard";
 import { calculateBadgeProgress, checkBudgetCompletions, getAllBadgeProgress } from "../services/badgeService";
+import { checkAndStartTour } from '../utils/tutorial';
 
 import StarterSaverIcon from "../assets/badges icon/starter saver.svg";
 import ThriftyHeroIcon from "../assets/badges icon/thrifty hero.svg";
@@ -191,16 +192,16 @@ const Rewards = () => {
   const loadBadges = async () => {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
     const email = user.email;
-    
+
     setUsername(user.name || user.displayName || "User");
-    
+
     if (!email) {
       setBadges([]);
       setUserEmail("");
       setLoading(false);
       return;
     }
-    
+
     setUserEmail(email);
 
     await checkBudgetCompletions(email);
@@ -210,7 +211,7 @@ const Rewards = () => {
     const badgesWithProgressPromises = badgeDefinitions.map(async badge => {
       const progress = await calculateBadgeProgress(badge, email);
       const unlockedData = badgeProgress[badge.id];
-      
+
       return {
         ...badge,
         progress: progress,
@@ -232,77 +233,80 @@ const Rewards = () => {
     };
 
     window.addEventListener("userStorageChange", handleUserChange);
-    
+
     setTimeout(() => {
       window.dispatchEvent(new Event('pageLoad'));
     }, 500);
-    
+
     return () => {
       window.removeEventListener("userStorageChange", handleUserChange);
     };
   }, []);
 
+  useEffect(() => {
+    checkAndStartTour();
+  }, []);
+
   return (
     <div className="flex h-screen bg-gray-50 font-poppins">
       <Sidebar />
-      <main className={`flex-1 bg-gray-50 transition-all duration-300 overflow-y-auto ml-0 lg:ml-20 ${
-        isExpanded ? "lg:ml-64" : "lg:ml-20"
-      }`}>
+      <main className={`flex-1 bg-gray-50 transition-all duration-300 overflow-y-auto ml-0 lg:ml-20 ${isExpanded ? "lg:ml-64" : "lg:ml-20"
+        }`}>
         <Header2 username={username} title="Badges" />
-        
+
         <div className="p-4 sm:p-6 lg:p-8">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
-              <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-gray-500 text-xs sm:text-sm">Total Badges</p>
-                    <p className="text-xl sm:text-2xl font-bold text-gray-800">{badges.length}</p>
-                  </div>
-                  <div className="bg-gradient-to-r from-emerald-400 to-green-500 p-2.5 sm:p-3 rounded-lg">
-                    <FaTrophy className="text-white text-xl sm:text-2xl" />
-                  </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+            <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-500 text-xs sm:text-sm">Total Badges</p>
+                  <p className="text-xl sm:text-2xl font-bold text-gray-800">{badges.length}</p>
                 </div>
-              </div>
-
-              <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-gray-500 text-xs sm:text-sm">Unlocked</p>
-                    <p className="text-xl sm:text-2xl font-bold text-green-600">
-                      {badges.filter(b => b.progress.unlocked).length}
-                    </p>
-                  </div>
-                  <div className="bg-gradient-to-r from-emerald-400 to-green-500 p-2.5 sm:p-3 rounded-lg">
-                    <FaMedal className="text-white text-xl sm:text-2xl" />
-                  </div>
+                <div className="bg-gradient-to-r from-emerald-400 to-green-500 p-2.5 sm:p-3 rounded-lg">
+                  <FaTrophy className="text-white text-xl sm:text-2xl" />
                 </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-4 lg:gap-6">
-              {loading ? (
-                <div className="col-span-full flex justify-center items-center h-48 sm:h-64">
-                  <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-2 border-green-500"></div>
+            <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-500 text-xs sm:text-sm">Unlocked</p>
+                  <p className="text-xl sm:text-2xl font-bold text-green-600">
+                    {badges.filter(b => b.progress.unlocked).length}
+                  </p>
                 </div>
-              ) : !userEmail ? (
-                <div className="col-span-full flex flex-col items-center justify-center h-48 sm:h-64 text-gray-400 px-4">
-                  <FaTrophy className="text-4xl sm:text-5xl lg:text-6xl mb-3 sm:mb-4" />
-                  <p className="text-sm sm:text-base lg:text-lg text-center">Please log in to view your badges</p>
+                <div className="bg-gradient-to-r from-emerald-400 to-green-500 p-2.5 sm:p-3 rounded-lg">
+                  <FaMedal className="text-white text-xl sm:text-2xl" />
                 </div>
-              ) : badges.length === 0 ? (
-                <div className="col-span-full flex flex-col items-center justify-center h-48 sm:h-64 text-gray-400 px-4">
-                  <FaMedal className="text-4xl sm:text-5xl lg:text-6xl mb-3 sm:mb-4" />
-                  <p className="text-sm sm:text-base lg:text-lg text-center">Start your journey to earn badges!</p>
-                </div>
-              ) : (
-                badges.map(badge => (
-                  <BadgeCard key={badge.id} badge={badge} />
-                ))
-              )}
+              </div>
             </div>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-4 lg:gap-6">
+            {loading ? (
+              <div className="col-span-full flex justify-center items-center h-48 sm:h-64">
+                <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-2 border-green-500"></div>
+              </div>
+            ) : !userEmail ? (
+              <div className="col-span-full flex flex-col items-center justify-center h-48 sm:h-64 text-gray-400 px-4">
+                <FaTrophy className="text-4xl sm:text-5xl lg:text-6xl mb-3 sm:mb-4" />
+                <p className="text-sm sm:text-base lg:text-lg text-center">Please log in to view your badges</p>
+              </div>
+            ) : badges.length === 0 ? (
+              <div className="col-span-full flex flex-col items-center justify-center h-48 sm:h-64 text-gray-400 px-4">
+                <FaMedal className="text-4xl sm:text-5xl lg:text-6xl mb-3 sm:mb-4" />
+                <p className="text-sm sm:text-base lg:text-lg text-center">Start your journey to earn badges!</p>
+              </div>
+            ) : (
+              badges.map(badge => (
+                <BadgeCard key={badge.id} badge={badge} />
+              ))
+            )}
+          </div>
         </div>
       </main>
-      
+
     </div>
   );
 };
